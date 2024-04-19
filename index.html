@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>のぅへの愛を伝えるページ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0e4d7;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #d63447;
+        }
+        p {
+            margin: 20px 0;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin-top: 20px;
+        }
+        input[type="text"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #d63447;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #b12d3c;
+        }
+    </style>
+</head>
+<body>
+    <h1>のぅへの愛を伝えるページ</h1>
+    <p>このページは、のぅへの愛を形にするために作られました。</p>
+    <p>あなたのメッセージをのぅへに送ってください：</p>
+    <form action="送信先URL" method="post">
+        <label for="name">お名前:</label><br>
+        <input type="text" id="name" name="name" required><br>
+        <label for="message">メッセージ:</label><br>
+        <textarea id="message" name="message" rows="4" required></textarea><br>
+        <input type="submit" value="送信">
+    </form>
+</body>
+</html>
