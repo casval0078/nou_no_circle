@@ -26,21 +26,16 @@
   };
 
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+  const app = firebase.initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
 </script>
 
 </head>
 <body>
-    <h1>のぅサークル　ログインページ</h1>
-    <form id="loginForm">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">Login</button>
-    </form>
-
+   <h1>Login</h1>
+    <input id="emailField" type="email" placeholder="Enter email">
+    <input id="passwordField" type="password" placeholder="Enter password">
+    <button id="signInButton">Sign In</button>
     <script src="app.js"></script>
 </body>
 </html>
