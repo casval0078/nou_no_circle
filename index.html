@@ -1,20 +1,11 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
-
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
     authDomain: "nou-no-circle.firebaseapp.com",
@@ -24,15 +15,12 @@
     appId: "1:756338805186:web:64c7cf77f1a8e0a9baae5b",
     measurementId: "G-RHFHLV9CC9"
   };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-
+      };
+      const app = firebase.initializeApp(firebaseConfig);
+    </script>
 </head>
 <body>
-   <h1>Login</h1>
+    <h1>Login</h1>
     <input id="emailField" type="email" placeholder="Enter email">
     <input id="passwordField" type="password" placeholder="Enter password">
     <button id="signInButton">Sign In</button>
