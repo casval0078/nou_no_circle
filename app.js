@@ -1,11 +1,24 @@
-document.getElementById('signInButton').addEventListener('click', function() {
-    const email = document.getElementById('emailField').value;
-    const password = document.getElementById('passwordField').value;
+// TODO: Replace the following with your app's Firebase project configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
+  authDomain: "nou-no-circle",
+  // other config properties
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     firebase.auth().signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            alert("ログイン成功: " + userCredential.user.email);
-        })
-        .catch((error) => {
-            alert("エラー: " + error.message);
-        });
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        console.log("Logged in as: ", user.email);
+      })
+      .catch((error) => {
+        console.error("Error: ", error.message);
+      });
 });
