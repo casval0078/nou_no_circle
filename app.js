@@ -1,7 +1,7 @@
 // TODO: Replace the following with your app's Firebase project configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-  authDomain: "nou-no-circle",
+  authDomain: "nou-no-circle.firebaseapp.com",
   // other config properties
 };
 
