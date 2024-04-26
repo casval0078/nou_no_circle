@@ -1,28 +1,20 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-    authDomain: "nou-no-circle.firebaseapp.com",
-    projectId: "nou-no-circle",
-    storageBucket: "nou-no-circle.appspot.com",
-    messagingSenderId: "756338805186",
-    appId: "1:756338805186:web:64c7cf77f1a8e0a9baae5b",
-    measurementId: "G-RHFHLV9CC9"
-  };
-      const app = firebase.initializeApp(firebaseConfig);
-    </script>
+    <script src="app.js"></script>
 </head>
 <body>
-    <h1>Login</h1>
-    <input id="emailField" type="email" placeholder="Enter email">
-    <input id="passwordField" type="password" placeholder="Enter password">
-    <button id="signInButton">Sign In</button>
-    <script src="app.js"></script>
+    <h2>Login</h2>
+    <form id="loginForm">
+        Email: <input type="email" id="email" required><br>
+        Password: <input type="password" id="password" required><br>
+        <button type="submit">Login</button>
+    </form>
 </body>
 </html>
