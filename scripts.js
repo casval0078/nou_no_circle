@@ -106,7 +106,8 @@ logoutButton.addEventListener('click', function() {
     // 投稿の読み込み
 function loadPosts() {
     const postsDiv = document.getElementById('posts');
-    postsDiv.innerHTML = '';
+    postsDiv.innerHTML = ''; // 既存の投稿をクリアする
+
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     getDocs(q).then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
@@ -118,6 +119,7 @@ function loadPosts() {
         });
     });
 }
+
     
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
