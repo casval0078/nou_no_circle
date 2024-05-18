@@ -1,51 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>掲示板サイト</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h2>Login</h2>
-    <form id="loginForm">
-        Email: <input type="email" id="email" required><br>
-        Password: <input type="password" id="password" required><br>
-        <button type="submit">Login</button>
-    </form>
-
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-      import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
-
-      const firebaseConfig = {
-    apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-    authDomain: "nou-no-circle.firebaseapp.com",
-    projectId: "nou-no-circle",
-    storageBucket: "nou-no-circle.appspot.com",
-    messagingSenderId: "756338805186",
-    appId: "1:756338805186:web:cb740e035ac611b5baae5b",
-    measurementId: "G-TWBV38P13D"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-
-      document.getElementById('loginForm').addEventListener('submit', function(event) {
-          event.preventDefault();
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
-          signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-              // Signed in 
-              const user = userCredential.user;
-              console.log("Logged in as: ", user.email);
-              // Redirect or handle login success
-            })
-            .catch((error) => {
-              console.error("Login Failed:", error.message);
-              // Handle Errors here.
-            });
-      });
-    </script>
+    <div id="loginPage" class="page">
+        <h1>ログイン</h1>
+        <form id="loginForm">
+            <label for="username">名前:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">パスワード:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="button" onclick="login()">ログイン</button>
+        </form>
+    </div>
+    
+    <div id="boardPage" class="page" style="display:none;">
+        <h1>投稿掲示板</h1>
+        <form id="postForm">
+            <label for="comment">コメント:</label>
+            <textarea id="comment" name="comment" required></textarea>
+            <button type="button" onclick="postComment()">投稿</button>
+        </form>
+        <div id="posts"></div>
+    </div>
+    
+    <script src="scripts.js"></script>
 </body>
 </html>
