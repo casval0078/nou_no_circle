@@ -55,16 +55,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // サインアップリンククリックイベント
-    signUpLink.addEventListener('click', function() {
-        loginForm.style.display = 'none';
-        signUpForm.style.display = 'block';
-    });
+signUpLink.addEventListener('click', function() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('boardPage').style.display = 'none';
+    signUpForm.style.display = 'block';
+});
 
     // ログインリンククリックイベント
-    loginLink.addEventListener('click', function() {
-        signUpForm.style.display = 'none';
-        loginForm.style.display = 'block';
-    });
+loginLink.addEventListener('click', function() {
+    document.getElementById('loginPage').style.display = 'block';
+    document.getElementById('boardPage').style.display = 'none';
+    signUpForm.style.display = 'none';
+});
 
     // 投稿フォームの送信イベント
 postForm.addEventListener('submit', function(event) {
