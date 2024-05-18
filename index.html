@@ -10,11 +10,20 @@
     <div id="loginPage" class="page">
         <h1>ログイン</h1>
         <form id="loginForm">
-            <label for="username">名前:</label>
-            <input type="text" id="username" name="username" required>
+            <label for="email">メールアドレス:</label>
+            <input type="email" id="email" name="email" required>
             <label for="password">パスワード:</label>
             <input type="password" id="password" name="password" required>
             <button type="submit">ログイン</button>
+            <p>アカウントをお持ちでないですか？ <a href="#" id="signUpLink">サインアップ</a></p>
+        </form>
+        <form id="signUpForm" style="display:none;">
+            <label for="signUpEmail">メールアドレス:</label>
+            <input type="email" id="signUpEmail" name="signUpEmail" required>
+            <label for="signUpPassword">パスワード:</label>
+            <input type="password" id="signUpPassword" name="signUpPassword" required>
+            <button type="submit">サインアップ</button>
+            <p>すでにアカウントをお持ちですか？ <a href="#" id="loginLink">ログイン</a></p>
         </form>
     </div>
     
@@ -26,8 +35,15 @@
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
+        <button id="logoutButton">ログアウト</button>
     </div>
     
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
     <script src="scripts.js"></script>
 </body>
 </html>
+
