@@ -93,12 +93,15 @@ postForm.addEventListener('submit', function(event) {
 });
 
     // ログアウトボタンクリックイベント
-    logoutButton.addEventListener('click', function() {
-        auth.signOut().then(() => {
-            document.getElementById('boardPage').style.display = 'none';
-            document.getElementById('loginPage').style.display = 'block';
-        });
+logoutButton.addEventListener('click', function() {
+    auth.signOut().then(() => {
+        // ログアウト後、ログインフォームの入力フィールドをクリアする
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('boardPage').style.display = 'none';
+        document.getElementById('loginPage').style.display = 'block';
     });
+});
 
     // 投稿の読み込み
 function loadPosts() {
