@@ -67,27 +67,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 投稿フォームの送信イベント
-    postForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const comment = document.getElementById('comment').value;
-        const user = auth.currentUser;
-        if (comment && user) {
-            db.collection('posts').add({
-                uid: user.uid,
-                comment: comment,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                document.getElementById('comment').value = '';
-                loadPosts();
-            })
-            .catch((error) => {
-                alert(error.message);
-            });
-        } else {
-            alert('コメントを入力してください');
-        }
-    });
+postForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const name = document.getElementById('name').value; // 名前の入力値を取得
+    const user = auth.currentUser;
+    if (comment && name && user) {
+        addDoc(collection(db, 'posts'), {
+            uid: user.uid,
+            name: name, // 名前をデータベースに保存
+            comment: comment,
+            timestamp: serverTimestamp()
+        })
+        .then(() => {
+            document.getElementById('comment').value = '';
+            document.getElementById('name').value = ''; // 投稿後に名前フィールドをクリア
+            loadPosts();
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+    } else {
+        alert('名前とコメントを入力してください');
+    }
+});
 
     // ログアウトボタンクリックイベント
     logoutButton.addEventListener('click', function() {
@@ -98,18 +101,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 投稿の読み込み
-    function loadPosts() {
-        db.collection('posts').orderBy('timestamp', 'desc').get().then((querySnapshot) => {
-            const postsDiv = document.getElementById('posts');
-            postsDiv.innerHTML = '';
-            querySnapshot.forEach((doc) => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                postDiv.innerText = doc.data().comment;
-                postsDiv.appendChild(postDiv);
-            });
+function loadPosts() {
+    const postsDiv = document.getElementById('posts');
+    postsDiv.innerHTML = '';
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    getDocs(q).then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post';
+            // 投稿者の名前とコメントを表示
+            postDiv.innerHTML = `<strong>${doc.data().name}:</strong> ${doc.data().comment}`;
+            postsDiv.appendChild(postDiv);
         });
-    }
+    });
+}
     
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
