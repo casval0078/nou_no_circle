@@ -76,7 +76,7 @@ loginForm.addEventListener('submit', function(event) {
     event.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    auth.signInWithEmailAndPassword(email, password)
+    signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('boardPage').style.display = 'block';
