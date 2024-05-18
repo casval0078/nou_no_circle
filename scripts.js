@@ -24,3 +24,16 @@ function postComment() {
         alert('コメントを入力してください');
     }
 }
+
+// DOMContentLoadedイベントリスナーを追加して、HTML要素が完全に読み込まれた後にJavaScriptを実行
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        login();
+    });
+
+    document.getElementById('postForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        postComment();
+    });
+});
