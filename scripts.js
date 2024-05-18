@@ -55,11 +55,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // サインアップリンククリックイベント
-signUpLink.addEventListener('click', function() {
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('boardPage').style.display = 'none';
+signUpLink.addEventListener('click', function(event) {
+    event.preventDefault(); // リンクのデフォルトの挙動を停止
+    loginForm.style.display = 'none';
     signUpForm.style.display = 'block';
 });
+
 
     // ログインリンククリックイベント
 loginLink.addEventListener('click', function() {
