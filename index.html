@@ -47,7 +47,8 @@
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -64,6 +65,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
@@ -79,8 +81,7 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) =>
-{
+                    .then((userCredential) => {
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
@@ -131,69 +132,45 @@
                 loginForm.style.display = 'block';
             });
 
-            // 投稿フォームの送信イベント
-            postForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const comment = document.getElementById('comment').value;
-                const user = auth.currentUser;
-                if (comment && user) {
-                    addDoc(collection(db, 'posts'), {
-                        uid: user.uid,
-                        name: user.displayName, // ユーザー名を追加
-                        comment: comment,
-                        timestamp: serverTimestamp()
-                    })
-                    .then(() => {
-                        document.getElementById('comment').value = '';
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
-                } else {
-                    alert('コメントを入力してください');
-                }
-            });
+           
+// 投稿フォームの送信イベント
+postForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const file = document.getElementById('file').files[0]; // 添付ファイルを取得
+    const user = auth.currentUser;
+    if (comment && user) {
+        try {
+            let downloadURL = ''; // ダウンロードURL
+            if (file) {
+                // ストレージに動画ファイルをアップロード
+                const storageRef = ref(storage, `videos/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                await uploadTask;
 
-            // ログアウトボタンクリックイベント
-            logoutButton.addEventListener('click', function() {
-                signOut(auth).then(() => {
-                    document.getElementById('boardPage').style.display = 'none';
-                    document.getElementById('loginPage').style.display = 'block';
-                });
-            });
-
-            // 投稿の読み込み
-            function loadPosts() {
-                const postsDiv = document.getElementById('posts');
-                postsDiv.innerHTML = '';
-                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-                getDocs(q).then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'post';
-                        const data = doc.data();
-                        // 投稿者名と投稿時間を表示
-                        const name = data.name ? `<strong>${data.name}:</strong> ` : ''; // 名前があれば表示
-                        const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : ''; // タイムスタンプがあれば表示
-                        postDiv.innerHTML = `${name}${data.comment}<br><span class="timestamp">${time}</span>`;
-                        postsDiv.appendChild(postDiv);
-                    });
-                });
+                // アップロードした動画ファイルのダウンロードURLを取得
+                downloadURL = await getDownloadURL(storageRef);
             }
-            
-            // 認証状態の変更を監視
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('boardPage').style.display = 'block';
-                    loadPosts();
-                } else {
-                    document.getElementById('loginPage').style.display = 'block';
-                    document.getElementById('boardPage').style.display = 'none';
-                }
+
+            // データベースに投稿を追加
+            await addDoc(collection(db, 'posts'), {
+                uid: user.uid,
+                name: user.displayName,
+                comment: comment,
+                videoURL: downloadURL, // 動画のダウンロードURLを追加
+                timestamp: serverTimestamp()
             });
-        });
-    </script>
-</body>
-</html>
+
+            // 投稿後にフォームをクリア
+            document.getElementById('comment').value = '';
+            document.getElementById('file').value = '';
+
+            // 投稿を読み込み
+            loadPosts();
+        } catch (error) {
+            alert(error.message);
+        }
+    } else {
+        alert('コメントを入力してください');
+    }
+});
