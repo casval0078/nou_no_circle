@@ -34,6 +34,8 @@
         <form id="postForm">
             <label for="comment">コメント:</label>
             <textarea id="comment" name="comment" required></textarea>
+            <label for="file">動画添付:</label>
+            <input type="file" id="file" name="file">
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
@@ -72,34 +74,34 @@
             const logoutButton = document.getElementById('logoutButton');
 
             // ログインフォームの送信イベント
-loginForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('boardPage').style.display = 'block';
-            loadPosts();
-        })
-        .catch((error) => {
-            // エラーコードに応じてメッセージを表示
-            switch (error.code) {
-                case 'auth/wrong-password':
-                    alert('パスワードが正しくありません。');
-                    break;
-                case 'auth/user-not-found':
-                    alert('ユーザーが見つかりません。');
-                    break;
-                case 'auth/invalid-email':
-                    alert('メールアドレスが無効です。');
-                    break;
-                default:
-                    alert('ログインに失敗しました。');
-            }
-        });
-});
-
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) =>
+{
+                        document.getElementById('loginPage').style.display = 'none';
+                        document.getElementById('boardPage').style.display = 'block';
+                        loadPosts();
+                    })
+                    .catch((error) => {
+                        // エラーコードに応じてメッセージを表示
+                        switch (error.code) {
+                            case 'auth/wrong-password':
+                                alert('パスワードが正しくありません。');
+                                break;
+                            case 'auth/user-not-found':
+                                alert('ユーザーが見つかりません。');
+                                break;
+                            case 'auth/invalid-email':
+                                alert('メールアドレスが無効です。');
+                                break;
+                            default:
+                                alert('ログインに失敗しました。');
+                        }
+                    });
+            });
 
             // サインアップフォームの送信イベント
             signUpForm.addEventListener('submit', function(event) {
@@ -137,6 +139,7 @@ loginForm.addEventListener('submit', function(event) {
                 if (comment && user) {
                     addDoc(collection(db, 'posts'), {
                         uid: user.uid,
+                        name: user.displayName, // ユーザー名を追加
                         comment: comment,
                         timestamp: serverTimestamp()
                     })
@@ -169,7 +172,11 @@ loginForm.addEventListener('submit', function(event) {
                     querySnapshot.forEach((doc) => {
                         const postDiv = document.createElement('div');
                         postDiv.className = 'post';
-                        postDiv.innerText = doc.data().comment;
+                        const data = doc.data();
+                        // 投稿者名と投稿時間を表示
+                        const name = data.name ? `<strong>${data.name}:</strong> ` : ''; // 名前があれば表示
+                        const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : ''; // タイムスタンプがあれば表示
+                        postDiv.innerHTML = `${name}${data.comment}<br><span class="timestamp">${time}</span>`;
                         postsDiv.appendChild(postDiv);
                     });
                 });
