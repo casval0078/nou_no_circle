@@ -6,12 +6,16 @@
     <title>掲示板サイト</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* 追加のCSSスタイル */
         .post {
             margin-bottom: 20px;
         }
-        .post img, .post video {
+
+        .post img,
+        .post video {
             max-width: 100%;
             height: auto;
+            cursor: pointer; /* クリックやタップで全画面表示 */
         }
     </style>
 </head>
@@ -39,7 +43,7 @@
     </div>
     
     <div id="boardPage" class="page" style="display:none;">
-        <h2 id="boardPageTitle">投稿掲示板</h2>
+        <h2>投稿掲示板</h2>
         <div id="logoutContainer">
             <button id="logoutButton">ログアウト</button>
         </div>
@@ -94,14 +98,11 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 signInWithEmailAndPassword(auth, email, password)
-                    .then(async (userCredential) => {
+                    .then((userCredential) => {
+                        // ログイン成功時にユーザー名を取得
                         const user = userCredential.user;
-                        // ユーザー名を取得
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const username = userDoc.data().name;
-
                         // ログイン成功時に投稿掲示板のタイトルの横にログイン者名を表示
-                        document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
+                        document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${user.email}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts(); // 引数を削除
@@ -113,30 +114,28 @@
 
             // サインアップフォームの送信イベント
             signUpForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('signUpEmail').value;
-            const password = document.getElementById('signUpPassword').value;
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-            const user = userCredential.user;
-            // ユーザー名とパスワードもデータベースに保存
-            return setDoc(doc(db, 'users', user.uid), {
-                name: name,
-                email: user.email,
-                password: password // 保存されるパスワード
+                event.preventDefault();
+                const name = document.getElementById('name').value; // 追加：ユーザー名を取得
+                const email = document.getElementById('signUpEmail').value;
+                const password = document.getElementById('signUpPassword').value;
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        // ユーザー名もデータベースに保存
+                        return setDoc(doc(db, 'users', user.uid), {
+                            name: name,
+                            email: user.email
+                        });
+                    })
+                    .then(() => {
+                        alert('サインアップが成功しました。ログインしてください。');
+                        signUpForm.style.display = 'none';
+                        loginForm.style.display = 'block';
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
             });
-        })
-        .then(() => {
-            alert('サインアップが成功しました。ログインしてください。');
-            signUpForm.style.display = 'none';
-            loginForm.style.display = 'block';
-        })
-        .catch((error) => {
-            alert(error.message);
-        });
-});
-
 
             // サインアップリンククリックイベント
             signUpLink.addEventListener('click', function() {
@@ -169,14 +168,10 @@
                             downloadURL = await getDownloadURL(storageRef);
                         }
 
-                        // ユーザー名を取得
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const username = userDoc.data().name;
-
                         // データベースに投稿を追加
-                            await addDoc(collection(db, 'posts'), {
+                        await addDoc(collection(db, 'posts'), {
                             uid: user.uid,
-                            username: username,
+                            username: user.email, // ユーザー名をメールアドレスから取得
                             comment: comment,
                             fileURL: downloadURL,
                             timestamp: serverTimestamp() // 投稿日時を保存
@@ -198,7 +193,7 @@
 
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
-                signOut(auth).then(() => {
+                auth.signOut().then(() => {
                     document.getElementById('boardPage').style.display = 'none';
                     document.getElementById('loginPage').style.display = 'block';
                 });
@@ -217,12 +212,14 @@
                     const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
                     const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
                     postDiv.innerHTML = `
-                        <p><strong>${postData.username}</strong> (${dateString})</p>
-                        <p>${postData.comment}</p>
+                        <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
                     `;
                     if (postData.fileURL) {
                         const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
                         fileElement.src = postData.fileURL;
+                        fileElement.onclick = function() {
+                            window.open(postData.fileURL); // クリックで全画面表示
+                        };
                         if (fileElement.tagName === 'VIDEO') {
                             fileElement.controls = true;
                         }
@@ -233,40 +230,19 @@
             }
 
             // 認証状態の変更を監視
-            onAuthStateChanged(auth, async (user) => {
+            auth.onAuthStateChanged((user) => {
                 if (user) {
-                    // ユーザーがログインしている場合
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const username = userDoc.data().name;
-                    document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
+                    // ログイン済みの場合の処理
+                    document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${user.email}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
                 } else {
-                    // ユーザーがログインしていない場合
+                    // 未ログインの場合の処理
                     document.getElementById('boardPageTitle').innerText = '投稿掲示板';
                     boardPage.style.display = 'none';
                     loginPage.style.display = 'block';
                 }
-            });
-
-            // 画像や動画のクリックイベントを追加
-            postsDiv.addEventListener('click', function(event) {
-                if (event.target.tagName === 'IMG' || event.target.tagName === 'VIDEO') {
-                    const modal = document.getElementById('myModal');
-                    const modalImg = document.getElementById('img01');
-                    const captionText = document.getElementById('caption');
-                    modal.style.display = 'block';
-                    modalImg.src = event.target.src;
-                    captionText.innerHTML = event.target.alt;
-                }
-            });
-
-            // モーダルの閉じるボタンをクリックしたときのイベント
-            const closeBtn = document.getElementsByClassName('close')[0];
-            closeBtn.addEventListener('click', function() {
-                const modal = document.getElementById('myModal');
-                modal.style.display = 'none';
             });
         });
     </script>
