@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>掲示板サイト</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
+     <style>
         /* 追加のCSSスタイル */
         .post {
             margin-bottom: 20px;
@@ -62,6 +62,7 @@
         <div id="posts"></div>
     </div>
     
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
@@ -115,8 +116,6 @@
             });
 
             // サインアップフォームの送信イベント
-            signUpForm.addEventListener('submit', function(event) {
-                event.preventDefault();
                 const name = document.getElementById('name').value; // 追加：ユーザー名を取得
                 const email = document.getElementById('signUpEmail').value;
                 const password = document.getElementById('signUpPassword').value;
@@ -139,6 +138,7 @@
                     });
             });
 
+
             // サインアップリンククリックイベント
             signUpLink.addEventListener('click', function() {
                 loginForm.style.display = 'none';
@@ -147,120 +147,120 @@
 
             // ログインリンククリックイベント
             loginLink.addEventListener('click', function() {
-            signUpForm.style.display = 'none';
-            loginForm.style.display = 'block';
+                signUpForm.style.display = 'none';
+                loginForm.style.display = 'block';
             });
 
-                    // 投稿フォームの送信イベント
-        postForm.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const comment = document.getElementById('comment').value;
-            const file = document.getElementById('file').files[0]; // 添付ファイルを取得
-            const user = auth.currentUser;
-            if (comment && user) {
-                try {
-                    let downloadURL = ''; // ダウンロードURL
-                    if (file) {
-                        // ストレージにファイルをアップロード
-                        const storageRef = ref(storage, `files/${file.name}`);
-                        const uploadTask = uploadBytesResumable(storageRef, file);
-                        await uploadTask;
-
-                        // アップロードしたファイルのダウンロードURLを取得
-                        downloadURL = await getDownloadURL(storageRef);
+            // 投稿フォームの送信イベント
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const comment = document.getElementById('comment').value;
+                const file = document.getElementById('file').files[0]; // 添付ファイルを取得
+                const user = auth.currentUser;
+                if (comment && user) {
+                    try {
+                        let downloadURL = ''; // ダウンロードURL
+                        if (file) {
+                            // ストレージにファイルをアップロード
+                            const storageRef = ref(storage, `files/${file.name}`);
+                            const uploadTask = uploadBytesResumable(storageRef, file);
+                            await uploadTask;
+        
+                            // アップロードしたファイルのダウンロードURLを取得
+                            downloadURL = await getDownloadURL(storageRef);
+                        }
+        
+                        // データベースに投稿を追加
+                        await addDoc(collection(db, 'posts'), {
+                            uid: user.uid,
+                            username: user.displayName,
+                            comment: comment,
+                            fileURL: downloadURL,
+                            timestamp: serverTimestamp() // 投稿日時を保存
+                        });
+        
+                        // 投稿後にフォームをクリア
+                        document.getElementById('comment').value = '';
+                        document.getElementById('file').value = '';
+        
+                        // 投稿を読み込み
+                        loadPosts();
+                    } catch (error) {
+                        alert(error.message);
                     }
+                } else {
+                    alert('コメントを入力してください');
+                }
+            });
 
-                    // データベースに投稿を追加
-                    await addDoc(collection(db, 'posts'), {
-                        uid: user.uid,
-                        username: user.displayName,
-                        comment: comment,
-                        fileURL: downloadURL,
-                        timestamp: serverTimestamp() // 投稿日時を保存
-                    });
+            // ログアウトボタンクリックイベント
+            logoutButton.addEventListener('click', function() {
+                auth.signOut().then(() => {
+                    document.getElementById('boardPage').style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'block';
+                });
+            });
 
-                    // 投稿後にフォームをクリア
-                    document.getElementById('comment').value = '';
-                    document.getElementById('file').value = '';
+            // 投稿の読み込み
+            async function loadPosts() {
+                const postsDiv = document.getElementById('posts');
+                postsDiv.innerHTML = '';
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'post';
+                    const postData = doc.data();
+                    const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
+                    const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
+                    postDiv.innerHTML = `
+                        <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
+                    `;
+                    if (postData.fileURL) {
+                        const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
+                        fileElement.src = postData.fileURL;
+                        if (fileElement.tagName === 'VIDEO') {
+                            fileElement.controls = true;
+                        }
+                        postDiv.appendChild(fileElement);
+                    }
+                    postsDiv.appendChild(postDiv);
+                });
+            }
 
-                    // 投稿を読み込み
+            // 認証状態の変更を監視
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // ログイン済みの場合の処理
+                    boardPage.style.display = 'block';
+                    loginPage.style.display = 'none';
                     loadPosts();
-                } catch (error) {
-                    alert(error.message);
+                } else {
+                    // 未ログインの場合の処理
+                    boardPage.style.display = 'none';
+                    loginPage.style.display = 'block';
                 }
-            } else {
-                alert('コメントを入力してください');
-            }
-        });
-
-        // ログアウトボタンクリックイベント
-        logoutButton.addEventListener('click', function() {
-            auth.signOut().then(() => {
-                document.getElementById('boardPage').style.display = 'none';
-                document.getElementById('loginPage').style.display = 'block';
             });
-        });
 
-        // 投稿の読み込み
-        async function loadPosts() {
-            const postsDiv = document.getElementById('posts');
-            postsDiv.innerHTML = '';
-            const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
-                const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
-                postDiv.innerHTML = `
-                    <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
-                `;
-                if (postData.fileURL) {
-                    const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
-                    fileElement.src = postData.fileURL;
-                    if (fileElement.tagName === 'VIDEO') {
-                        fileElement.controls = true;
-                    }
-                    postDiv.appendChild(fileElement);
+            // 画像や動画のクリックイベントを追加
+            postsDiv.addEventListener('click', function(event) {
+                if (event.target.tagName === 'IMG' || event.target.tagName === 'VIDEO') {
+                    const modal = document.getElementById('myModal');
+                    const modalImg = document.getElementById('img01');
+                    const captionText = document.getElementById('caption');
+                    modal.style.display = 'block';
+                    modalImg.src = event.target.src;
+                    captionText.innerHTML = event.target.alt;
                 }
-                postsDiv.appendChild(postDiv);
             });
-        }
 
-        // 認証状態の変更を監視
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // ログイン済みの場合の処理
-                boardPage.style.display = 'block';
-                loginPage.style.display = 'none';
-                loadPosts();
-            } else {
-                // 未ログインの場合の処理
-                boardPage.style.display = 'none';
-                loginPage.style.display = 'block';
-            }
-        });
-
-        // 画像や動画のクリックイベントを追加
-        postsDiv.addEventListener('click', function(event) {
-            if (event.target.tagName === 'IMG' || event.target.tagName === 'VIDEO') {
+            // モーダルの閉じるボタンをクリックしたときのイベント
+            const closeBtn = document.getElementsByClassName('close')[0];
+            closeBtn.addEventListener('click', function() {
                 const modal = document.getElementById('myModal');
-                const modalImg = document.getElementById('img01');
-                const captionText = document.getElementById('caption');
-                modal.style.display = 'block';
-                modalImg.src = event.target.src;
-                captionText.innerHTML = event.target.alt;
-            }
-        });
-
-        // モーダルの閉じるボタンをクリックしたときのイベント
-        const closeBtn = document.getElementsByClassName('close')[0];
-        closeBtn.addEventListener('click', function() {
-            const modal = document.getElementById('myModal');
-            modal.style.display = 'none';
+                modal.style.display = 'none';
+            });
         });
     </script>
 </body>
 </html>
-
