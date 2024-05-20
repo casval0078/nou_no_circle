@@ -146,21 +146,16 @@ postForm.addEventListener('submit', async function(event) {
     });
 
     // 投稿の読み込み
-async function loadPosts() {
-    const postsDiv = document.getElementById('posts');
-    postsDiv.innerHTML = '';
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (doc) => {
-        const postDiv = document.createElement('div');
-        postDiv.className = 'post';
-        const postData = doc.data();
-        // ユーザー名をデータベースから取得して表示
-        const userRef = doc(db, 'users', postData.uid);
-        const userSnapshot = await getDoc(userRef);
-        if (userSnapshot.exists()) {
-            const userData = userSnapshot.data();
-            postDiv.innerHTML = `<p><strong>${userData.name}: </strong>${postData.comment}</p>`;
+    async function loadPosts() {
+        const postsDiv = document.getElementById('posts');
+        postsDiv.innerHTML = '';
+        const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post';
+            const postData = doc.data();
+            postDiv.innerHTML = `<p><strong>${auth.currentUser.displayName}: </strong>${postData.comment}</p>`; // ユーザー名を表示
             if (postData.fileURL) {
                 const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
                 fileElement.src = postData.fileURL;
@@ -170,9 +165,8 @@ async function loadPosts() {
                 postDiv.appendChild(fileElement);
             }
             postsDiv.appendChild(postDiv);
-        }
-    });
-}
+        });
+    }
 
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
