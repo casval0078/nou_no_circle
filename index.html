@@ -202,6 +202,25 @@
                     document.getElementById('boardPage').style.display = 'none';
                 }
             });
+
+            // 画像や動画のクリックイベントを追加
+        postsDiv.addEventListener('click', function(event) {
+            if (event.target.tagName === 'IMG' || event.target.tagName === 'VIDEO') {
+                const modal = document.getElementById('myModal');
+                const modalImg = document.getElementById('img01');
+                const captionText = document.getElementById('caption');
+                modal.style.display = 'block';
+                modalImg.src = event.target.src;
+                captionText.innerHTML = event.target.alt;
+            }
+        });
+
+        // モーダルの閉じるボタンをクリックしたときのイベント
+        const closeBtn = document.getElementsByClassName('close')[0];
+        closeBtn.addEventListener('click', function() {
+            const modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+        });
         });
     </script>
 </body>
