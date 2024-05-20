@@ -69,34 +69,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 投稿フォームの送信イベント
-    postForm.addEventListener('submit', async function(event) {
+postForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     const comment = document.getElementById('comment').value;
     const file = document.getElementById('file').files[0]; // 添付ファイルを取得
     const user = auth.currentUser;
     if (comment && user) {
         try {
-            let imageURL = ''; // 画像のURL
+            let downloadURL = ''; // ダウンロードURL
             if (file) {
-                // ファイルの拡張子をチェックして、動画でない場合は画像として処理する
-                const fileType = file.type.split('/')[0];
-                if (fileType === 'image') {
-                    // ストレージに画像ファイルをアップロード
-                    const storageRef = storage.ref().child(`images/${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    imageURL = await snapshot.ref.getDownloadURL();
-                } else {
-                    alert('動画ファイルのみがサポートされています。');
-                    return;
-                }
+                // ストレージに動画ファイルをアップロード
+                const storageRef = ref(storage, `files/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                await uploadTask;
+
+                // アップロードした動画ファイルのダウンロードURLを取得
+                downloadURL = await getDownloadURL(storageRef);
             }
 
             // データベースに投稿を追加
-            await db.collection('posts').add({
+            await addDoc(collection(db, 'posts'), {
                 uid: user.uid,
+                username: user.displayName, // ユーザー名を追加
                 comment: comment,
-                imageURL: imageURL,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                fileURL: downloadURL, // 動画のダウンロードURLを追加
+                timestamp: serverTimestamp()
             });
 
             // 投稿後にフォームをクリア
@@ -112,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('コメントを入力してください');
     }
 });
+
 
 
   querySnapshot.forEach((doc) => {
