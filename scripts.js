@@ -67,53 +67,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 投稿フォームの送信イベント
-    postForm.addEventListener('submit', function(event) {
+    postForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     const comment = document.getElementById('comment').value;
     const file = document.getElementById('file').files[0]; // 添付ファイルを取得
     const user = auth.currentUser;
     if (comment && user) {
-        if (file) {
-            // ストレージに画像ファイルをアップロード
-            const storageRef = storage.ref().child(`images/${file.name}`);
-            storageRef.put(file).then((snapshot) => {
-                snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    // アップロードした画像のURLをデータベースに保存
-                    db.collection('posts').add({
-                        uid: user.uid,
-                        comment: comment,
-                        imageURL: downloadURL,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    })
-                    .then(() => {
-                        document.getElementById('comment').value = '';
-                        document.getElementById('file').value = ''; // フォームをクリア
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
-                });
-            });
-        } else {
-            // 画像が選択されていない場合は、テキストだけを投稿
-            db.collection('posts').add({
+        try {
+            let imageURL = ''; // 画像のURL
+            if (file) {
+                // ファイルの拡張子をチェックして、動画でない場合は画像として処理する
+                const fileType = file.type.split('/')[0];
+                if (fileType === 'image') {
+                    // ストレージに画像ファイルをアップロード
+                    const storageRef = storage.ref().child(`images/${file.name}`);
+                    const snapshot = await storageRef.put(file);
+                    imageURL = await snapshot.ref.getDownloadURL();
+                } else {
+                    alert('動画ファイルのみがサポートされています。');
+                    return;
+                }
+            }
+
+            // データベースに投稿を追加
+            await db.collection('posts').add({
                 uid: user.uid,
                 comment: comment,
+                imageURL: imageURL,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                document.getElementById('comment').value = '';
-                loadPosts();
-            })
-            .catch((error) => {
-                alert(error.message);
             });
+
+            // 投稿後にフォームをクリア
+            document.getElementById('comment').value = '';
+            document.getElementById('file').value = '';
+
+            // 投稿を読み込み
+            loadPosts();
+        } catch (error) {
+            alert(error.message);
         }
     } else {
         alert('コメントを入力してください');
     }
 });
+
 
   querySnapshot.forEach((doc) => {
     const postDiv = document.createElement('div');
