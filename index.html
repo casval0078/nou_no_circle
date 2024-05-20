@@ -224,7 +224,8 @@
                     const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
                     const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
                     postDiv.innerHTML = `
-                        <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
+                        <p><strong>${postData.username}</strong> (${dateString})</p>
+                        <p>${postData.comment}</p>
                     `;
                     if (postData.fileURL) {
                         const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
