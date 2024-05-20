@@ -97,7 +97,7 @@
             const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
 
-            // ログインフォームの送信イベント
+           // ログインフォームの送信イベント
 loginForm.addEventListener('submit', function(event) {
     event.preventDefault();
     const email = document.getElementById('email').value;
@@ -227,7 +227,7 @@ async function loadPosts(username) {
         const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
         const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
         postDiv.innerHTML = `
-            <p><strong>${username}</strong> (${dateString}): ${postData.comment}</p>
+            <p><strong>${username}</strong> (${dateString}):<br>${postData.comment}</p>
         `;
         if (postData.fileURL) {
             const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
@@ -235,6 +235,17 @@ async function loadPosts(username) {
             if (fileElement.tagName === 'VIDEO') {
                 fileElement.controls = true;
             }
+            // 縮小画像の場合はクリックで全画面表示
+            fileElement.addEventListener('click', function() {
+                if (fileElement.tagName === 'IMG') {
+                    const modal = document.getElementById('myModal');
+                    const modalImg = document.getElementById('img01');
+                    const captionText = document.getElementById('caption');
+                    modal.style.display = 'block';
+                    modalImg.src = fileElement.src;
+                    captionText.innerHTML = postData.comment; // コメントをキャプションに表示
+                }
+            });
             postDiv.appendChild(fileElement);
         }
         postsDiv.appendChild(postDiv);
