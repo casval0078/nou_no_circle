@@ -1,0 +1,8 @@
+[
+    {
+        "origin": ["https://casval0078.github.io"],
+        "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+        "maxAgeSeconds": 3600,
+        "responseHeader": ["Content-Type", "Authorization"]
+    }
+]
