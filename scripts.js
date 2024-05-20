@@ -26,22 +26,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ログインフォームの送信イベント
 loginForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            // ログイン成功時にユーザー名を取得
-            const user = userCredential.user;
-            const userName = user.displayName;
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('boardPage').style.display = 'block';
-            loadPosts(userName); // ユーザー名を引数として渡す
-        })
-        .catch((error) => {
-            alert(error.message);
-        });
-});
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                // ログイン成功時にユーザー名を取得
+                const user = userCredential.user;
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('boardPage').style.display = 'block';
+                loadPosts(); // 引数を削除
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    });
 
     // サインアップフォームの送信イベント
 signUpForm.addEventListener('submit', function(event) {
