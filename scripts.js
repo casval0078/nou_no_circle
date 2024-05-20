@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginLink = document.getElementById('loginLink');
     const postForm = document.getElementById('postForm');
     const logoutButton = document.getElementById('logoutButton');
+    const boardPage = document.getElementById('boardPage');
+    const postsDiv = document.getElementById('posts');
 
     // ログインフォームの送信イベント
     loginForm.addEventListener('submit', function(event) {
@@ -136,12 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 投稿の読み込み
     function loadPosts() {
         db.collection('posts').orderBy('timestamp', 'desc').get().then((querySnapshot) => {
-            const postsDiv = document.getElementById('posts');
             postsDiv.innerHTML = '';
             querySnapshot.forEach((doc) => {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
-                postDiv.innerText = doc.data().comment;
+                const postData = doc.data();
+                const postDate = new Date(postData.timestamp.toDate()).toLocaleString();
+                postDiv.innerHTML = `<p>${postData.comment}</p><p>投稿者: ${postData.username}</p><p>投稿日時: ${postDate}</p>`;
                 postsDiv.appendChild(postDiv);
             });
         });
@@ -150,12 +153,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
         if (user) {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('boardPage').style.display = 'block';
+            // ログイン済みの場合の処理
+            boardPage.style.display = 'block';
+            loginPage.style.display = 'none';
             loadPosts();
         } else {
-            document.getElementById('loginPage').style.display = 'block';
-            document.getElementById('boardPage').style.display = 'none';
+            // 未ログインの場合の処理
+            boardPage.style.display = 'none';
+            loginPage.style.display = 'block';
         }
     });
 });
