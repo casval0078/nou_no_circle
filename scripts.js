@@ -41,20 +41,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // サインアップフォームの送信イベント
-    signUpForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const email = document.getElementById('signUpEmail').value;
-        const password = document.getElementById('signUpPassword').value;
-        auth.createUserWithEmailAndPassword(email, password)
-            .then((userCredential) => {
+signUpForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const name = document.getElementById('name').value; // 追加
+    const email = document.getElementById('signUpEmail').value;
+    const password = document.getElementById('signUpPassword').value;
+    createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            // Firebase Authentication に名前を追加
+            updateProfile(auth.currentUser, {
+                displayName: name
+            }).then(() => {
                 alert('サインアップが成功しました。ログインしてください。');
                 signUpForm.style.display = 'none';
                 loginForm.style.display = 'block';
-            })
-            .catch((error) => {
+            }).catch((error) => {
                 alert(error.message);
             });
-    });
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+});
+
 
     // サインアップリンククリックイベント
     signUpLink.addEventListener('click', function() {
