@@ -98,22 +98,24 @@
             const postsDiv = document.getElementById('posts');
 
             // ログインフォームの送信イベント
-            loginForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        // ログイン成功時にユーザー名を取得
-                        const user = userCredential.user;
-                        document.getElementById('loginPage').style.display = 'none';
-                        document.getElementById('boardPage').style.display = 'block';
-                        loadPosts(); // 引数を削除
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
-            });
+loginForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            // ログイン成功時にユーザー名を取得
+            const user = userCredential.user;
+            const username = user.displayName; // ユーザー名を取得
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('boardPage').style.display = 'block';
+            loadPosts(username); // ユーザー名をloadPosts関数に渡す
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+});
+
 
             // サインアップフォームの送信イベント
             signUpForm.addEventListener('submit', function(event) {
@@ -202,31 +204,32 @@
         });
 
         // 投稿の読み込み
-        async function loadPosts() {
-            const postsDiv = document.getElementById('posts');
-            postsDiv.innerHTML = '';
-            const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
-                const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
-                postDiv.innerHTML = `
-                    <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
-                `;
-                if (postData.fileURL) {
-                    const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
-                    fileElement.src = postData.fileURL;
-                    if (fileElement.tagName === 'VIDEO') {
-                        fileElement.controls = true;
-                    }
-                    postDiv.appendChild(fileElement);
-                }
-                postsDiv.appendChild(postDiv);
-            });
+async function loadPosts(username) {
+    const postsDiv = document.getElementById('posts');
+    postsDiv.innerHTML = '';
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        const postData = doc.data();
+        const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
+        const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
+        postDiv.innerHTML = `
+            <p><strong>${username}</strong> (${dateString}): ${postData.comment}</p>
+        `;
+        if (postData.fileURL) {
+            const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
+            fileElement.src = postData.fileURL;
+            if (fileElement.tagName === 'VIDEO') {
+                fileElement.controls = true;
+            }
+            postDiv.appendChild(fileElement);
         }
+        postsDiv.appendChild(postDiv);
+    });
+}
+
 
         // 認証状態の変更を監視
         auth.onAuthStateChanged((user) => {
