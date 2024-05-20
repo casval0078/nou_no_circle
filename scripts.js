@@ -25,20 +25,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const postsDiv = document.getElementById('posts');
 
     // ログインフォームの送信イベント
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        auth.signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('boardPage').style.display = 'block';
-                loadPosts();
-            })
-            .catch((error) => {
-                alert(error.message);
-            });
-    });
+loginForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            // ログイン成功時にユーザー名を取得
+            const user = userCredential.user;
+            const userName = user.displayName;
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('boardPage').style.display = 'block';
+            loadPosts(userName); // ユーザー名を引数として渡す
+        })
+        .catch((error) => {
+            alert(error.message);
+        });
+});
 
     // サインアップフォームの送信イベント
 signUpForm.addEventListener('submit', function(event) {
@@ -143,7 +146,7 @@ postForm.addEventListener('submit', async function(event) {
     });
 
     // 投稿の読み込み
-async function loadPosts() {
+async function loadPosts(userName) {
     const postsDiv = document.getElementById('posts');
     postsDiv.innerHTML = '';
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
@@ -152,11 +155,7 @@ async function loadPosts() {
         const postDiv = document.createElement('div');
         postDiv.className = 'post';
         const postData = doc.data();
-        const timestamp = postData.timestamp.toDate();
-        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
-        postDiv.innerHTML = `<p><strong>投稿者:</strong> ${postData.username}</p>
-                             <p>${postData.comment}</p>
-                             <p class="timestamp">${timestamp.toLocaleDateString('ja-JP', dateOptions)}</p>`;
+        postDiv.innerHTML = `<p><strong>${userName}: </strong>${postData.comment}</p>`; // ユーザー名を表示
         if (postData.fileURL) {
             const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
             fileElement.src = postData.fileURL;
@@ -168,6 +167,7 @@ async function loadPosts() {
         postsDiv.appendChild(postDiv);
     });
 }
+
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
         if (user) {
