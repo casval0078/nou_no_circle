@@ -233,7 +233,7 @@
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     // ログイン済みの場合の処理
-                    document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${user.email}`;
+                    document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
