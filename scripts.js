@@ -55,97 +55,61 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // サインアップリンククリックイベント
-signUpLink.addEventListener('click', function() {
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('boardPage').style.display = 'none';
-    signUpForm.style.display = 'block';
-});
+    signUpLink.addEventListener('click', function() {
+        loginForm.style.display = 'none';
+        signUpForm.style.display = 'block';
+    });
 
     // ログインリンククリックイベント
-loginLink.addEventListener('click', function() {
-    document.getElementById('loginPage').style.display = 'block';
-    document.getElementById('boardPage').style.display = 'none';
-    signUpForm.style.display = 'none';
-});
+    loginLink.addEventListener('click', function() {
+        signUpForm.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
 
     // 投稿フォームの送信イベント
-postForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    // フォームから入力値を取得
-    const comment = document.getElementById('comment').value;
-    const name = document.getElementById('name').value;
-    const user = auth.currentUser;
-    const file = document.getElementById('video').files[0]; // 動画ファイルを取得
-
-    if (comment && name && user && file) {
-        // 動画ファイルをStorageにアップロード
-        const storageRef = ref(storage, 'videos/' + file.name);
-        uploadBytes(storageRef, file)
-            .then((snapshot) => {
-                // アップロードが成功したら、動画のURLを取得
-                return getDownloadURL(snapshot.ref);
-            })
-            .then((videoUrl) => {
-                // 動画のURLを含むデータをFirestoreに保存
-                return addDoc(collection(db, 'posts'), {
-                    uid: user.uid,
-                    name: name,
-                    comment: comment,
-                    videoUrl: videoUrl, // 動画のURLを保存
-                    timestamp: serverTimestamp()
-                });
+    postForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const comment = document.getElementById('comment').value;
+        const user = auth.currentUser;
+        if (comment && user) {
+            db.collection('posts').add({
+                uid: user.uid,
+                comment: comment,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             })
             .then(() => {
-                // 投稿後の処理
                 document.getElementById('comment').value = '';
-                document.getElementById('name').value = '';
-                document.getElementById('video').value = ''; // フォームをクリア
-                loadPosts(); // 投稿を読み込み直す
+                loadPosts();
             })
             .catch((error) => {
                 alert(error.message);
             });
-    } else {
-        alert('名前、コメント、動画を入力してください');
-    }
-});
+        } else {
+            alert('コメントを入力してください');
+        }
+    });
 
     // ログアウトボタンクリックイベント
-logoutButton.addEventListener('click', function() {
-    auth.signOut().then(() => {
-        // ログアウト後、ログインフォームの入力フィールドをクリアする
-        document.getElementById('email').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('boardPage').style.display = 'none';
-        document.getElementById('loginPage').style.display = 'block';
-    });
-});
-
-    // 投稿の読み込み
-function loadPosts() {
-    const postsDiv = document.getElementById('posts');
-    postsDiv.innerHTML = '';
-
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-    getDocs(q).then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-            const postDiv = document.createElement('div');
-            postDiv.className = 'post';
-            // 投稿者の名前とコメントを表示
-            postDiv.innerHTML = `<strong>${doc.data().name}:</strong> ${doc.data().comment}`;
-            // 動画があれば、埋め込んで表示
-            if (doc.data().videoUrl) {
-                const videoElement = document.createElement('video');
-                videoElement.src = doc.data().videoUrl;
-                videoElement.controls = true; // ビデオコントロールを有効にする
-                postDiv.appendChild(videoElement);
-            }
-            postsDiv.appendChild(postDiv);
+    logoutButton.addEventListener('click', function() {
+        auth.signOut().then(() => {
+            document.getElementById('boardPage').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'block';
         });
     });
-}
 
+    // 投稿の読み込み
+    function loadPosts() {
+        db.collection('posts').orderBy('timestamp', 'desc').get().then((querySnapshot) => {
+            const postsDiv = document.getElementById('posts');
+            postsDiv.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                postDiv.innerText = doc.data().comment;
+                postsDiv.appendChild(postDiv);
+            });
+        });
+    }
     
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
