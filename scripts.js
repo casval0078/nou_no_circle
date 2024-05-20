@@ -68,10 +68,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 投稿フォームの送信イベント
     postForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const comment = document.getElementById('comment').value;
-        const user = auth.currentUser;
-        if (comment && user) {
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const file = document.getElementById('file').files[0]; // 添付ファイルを取得
+    const user = auth.currentUser;
+    if (comment && user) {
+        if (file) {
+            // ストレージに画像ファイルをアップロード
+            const storageRef = storage.ref().child(`images/${file.name}`);
+            storageRef.put(file).then((snapshot) => {
+                snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    // アップロードした画像のURLをデータベースに保存
+                    db.collection('posts').add({
+                        uid: user.uid,
+                        comment: comment,
+                        imageURL: downloadURL,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        document.getElementById('comment').value = '';
+                        document.getElementById('file').value = ''; // フォームをクリア
+                        loadPosts();
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
+                });
+            });
+        } else {
+            // 画像が選択されていない場合は、テキストだけを投稿
             db.collection('posts').add({
                 uid: user.uid,
                 comment: comment,
@@ -84,10 +109,24 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch((error) => {
                 alert(error.message);
             });
-        } else {
-            alert('コメントを入力してください');
         }
-    });
+    } else {
+        alert('コメントを入力してください');
+    }
+});
+
+  querySnapshot.forEach((doc) => {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    postDiv.innerText = doc.data().comment;
+    if (doc.data().imageURL) {
+        const imgElement = document.createElement('img');
+        imgElement.src = doc.data().imageURL;
+        postDiv.appendChild(imgElement);
+    }
+    postsDiv.appendChild(postDiv);
+});
+
 
     // ログアウトボタンクリックイベント
     logoutButton.addEventListener('click', function() {
