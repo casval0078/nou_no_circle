@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>掲示板サイト</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico"> <!-- faviconの設定 -->
 </head>
 <body>
     <div id="loginPage" class="page">
@@ -34,8 +35,8 @@
         <form id="postForm">
             <label for="comment">コメント:</label>
             <textarea id="comment" name="comment" required></textarea>
-            <label for="file">動画添付:</label>
-            <input type="file" id="file" name="file">
+            <label for="file">画像・動画添付:</label>
+            <input type="file" id="file" name="file" accept="image/*,video/*">
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
@@ -43,27 +44,28 @@
     </div>
 
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js"></script> <!-- Firebase Storage追加 -->
 
-        // Your web app's Firebase configuration
+    <script>
+        // Firebase設定を貼り付け
         const firebaseConfig = {
-              apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-              authDomain: "nou-no-circle.firebaseapp.com",
-              projectId: "nou-no-circle",
-              storageBucket: "nou-no-circle.appspot.com",
-              messagingSenderId: "756338805186",
-              appId: "1:756338805186:web:cb740e035ac611b5baae5b",
-              measurementId: "G-TWBV38P13D"
+            apiKey: "API_KEY",
+            authDomain: "nou-no-circle.firebaseapp.com",
+            projectId: "nou-no-circle",
+            storageBucket: "nou-no-circle.appspot.com",
+            messagingSenderId: "756338805186",
+            appId: "1:756338805186:web:cb740e035ac611b5baae5b",
+            measurementId: "G-TWBV38P13D"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Firebase初期化
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage(); // Firebase Storageの初期化
 
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
@@ -78,7 +80,7 @@
                 event.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                signInWithEmailAndPassword(auth, email, password)
+                auth.signInWithEmailAndPassword(email, password)
                     .then((userCredential) => {
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
@@ -94,7 +96,7 @@
                 event.preventDefault();
                 const email = document.getElementById('signUpEmail').value;
                 const password = document.getElementById('signUpPassword').value;
-                createUserWithEmailAndPassword(auth, email, password)
+                auth.createUserWithEmailAndPassword(email, password)
                     .then((userCredential) => {
                         alert('サインアップが成功しました。ログインしてください。');
                         signUpForm.style.display = 'none';
@@ -121,20 +123,45 @@
             postForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const comment = document.getElementById('comment').value;
+                const file = document.getElementById('file').files[0];
                 const user = auth.currentUser;
+
                 if (comment && user) {
-                    addDoc(collection(db, 'posts'), {
-                        uid: user.uid,
-                        comment: comment,
-                        timestamp: serverTimestamp()
-                    })
-                    .then(() => {
-                        document.getElementById('comment').value = '';
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
+                    if (file) {
+                        const storageRef = storage.ref();
+                        const fileRef = storageRef.child(`uploads/${user.uid}/${file.name}`);
+                        fileRef.put(file).then(() => {
+                            fileRef.getDownloadURL().then((url) => {
+                                db.collection('posts').add({
+                                    uid: user.uid,
+                                    comment: comment,
+                                    fileUrl: url,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                })
+                                .then(() => {
+                                    document.getElementById('comment').value = '';
+                                    document.getElementById('file').value = '';
+                                    loadPosts();
+                                })
+                                .catch((error) => {
+                                    alert(error.message);
+                                });
+                            });
+                        });
+                    } else {
+                        db.collection('posts').add({
+                            uid: user.uid,
+                            comment: comment,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        })
+                        .then(() => {
+                            document.getElementById('comment').value = '';
+                            loadPosts();
+                        })
+                        .catch((error) => {
+                            alert(error.message);
+                        });
+                    }
                 } else {
                     alert('コメントを入力してください');
                 }
@@ -142,7 +169,7 @@
 
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
-                signOut(auth).then(() => {
+                auth.signOut().then(() => {
                     document.getElementById('boardPage').style.display = 'none';
                     document.getElementById('loginPage').style.display = 'block';
                 });
@@ -150,31 +177,38 @@
 
             // 投稿の読み込み
             function loadPosts() {
-                const postsDiv = document.getElementById('posts');
-                postsDiv.innerHTML = '';
-                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-                getDocs(q).then((querySnapshot) => {
+                db.collection('posts').orderBy('timestamp', 'desc').get().then((querySnapshot) => {
+                    const postsDiv = document.getElementById('posts');
+                    postsDiv.innerHTML = '';
                     querySnapshot.forEach((doc) => {
+                        const postData = doc.data();
                         const postDiv = document.createElement('div');
                         postDiv.className = 'post';
-                        postDiv.innerText = doc.data().comment;
+                        postDiv.innerText = postData.comment;
+                        if (postData.fileUrl) {
+                            const fileElement = document.createElement(postData.fileUrl.includes('video') ? 'video' : 'img');
+                            fileElement.src = postData.fileUrl;
+                            fileElement.controls = true;
+                            postDiv.appendChild(fileElement);
+                        }
                         postsDiv.appendChild(postDiv);
                     });
                 });
             }
-            
-            // 認証状態の変更を監視
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('boardPage').style.display = 'block';
-                    loadPosts();
-                } else {
-                    document.getElementById('loginPage').style.display = 'block';
-                    document.getElementById('boardPage').style.display = 'none';
-                }
-            });
-        });
-    </script>
+
+            // 認証状態の変更を監状態を監視
+        auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('boardPage').style.display = 'block';
+            loadPosts();
+        } else {
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('boardPage').style.display = 'none';
+        }
+    });
+});
+</script>
+
 </body>
 </html>
