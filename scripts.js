@@ -46,21 +46,22 @@ loginForm.addEventListener('submit', function(event) {
     // サインアップフォームの送信イベント
 signUpForm.addEventListener('submit', function(event) {
     event.preventDefault();
-    const name = document.getElementById('name').value; // 追加
+    const name = document.getElementById('name').value; // 追加：ユーザー名を取得
     const email = document.getElementById('signUpEmail').value;
     const password = document.getElementById('signUpPassword').value;
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Firebase Authentication に名前を追加
-            updateProfile(auth.currentUser, {
-                displayName: name
-            }).then(() => {
-                alert('サインアップが成功しました。ログインしてください。');
-                signUpForm.style.display = 'none';
-                loginForm.style.display = 'block';
-            }).catch((error) => {
-                alert(error.message);
+            const user = userCredential.user;
+            // ユーザー名もデータベースに保存
+            return setDoc(doc(db, 'users', user.uid), {
+                name: name,
+                email: user.email
             });
+        })
+        .then(() => {
+            alert('サインアップが成功しました。ログインしてください。');
+            signUpForm.style.display = 'none';
+            loginForm.style.display = 'block';
         })
         .catch((error) => {
             alert(error.message);
@@ -146,25 +147,31 @@ postForm.addEventListener('submit', async function(event) {
     });
 
     // 投稿の読み込み
-async function loadPosts(userName) {
+async function loadPosts() {
     const postsDiv = document.getElementById('posts');
     postsDiv.innerHTML = '';
     const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach(async (doc) => {
         const postDiv = document.createElement('div');
         postDiv.className = 'post';
         const postData = doc.data();
-        postDiv.innerHTML = `<p><strong>${userName}: </strong>${postData.comment}</p>`; // ユーザー名を表示
-        if (postData.fileURL) {
-            const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
-            fileElement.src = postData.fileURL;
-            if (fileElement.tagName === 'VIDEO') {
-                fileElement.controls = true;
+        // ユーザー名をデータベースから取得して表示
+        const userRef = doc(db, 'users', postData.uid);
+        const userSnapshot = await getDoc(userRef);
+        if (userSnapshot.exists()) {
+            const userData = userSnapshot.data();
+            postDiv.innerHTML = `<p><strong>${userData.name}: </strong>${postData.comment}</p>`;
+            if (postData.fileURL) {
+                const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
+                fileElement.src = postData.fileURL;
+                if (fileElement.tagName === 'VIDEO') {
+                    fileElement.controls = true;
+                }
+                postDiv.appendChild(fileElement);
             }
-            postDiv.appendChild(fileElement);
+            postsDiv.appendChild(postDiv);
         }
-        postsDiv.appendChild(postDiv);
     });
 }
 
