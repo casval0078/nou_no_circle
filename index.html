@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>掲示板サイト</title>
     <link rel="stylesheet" href="styles.css">
+     <style>
+        /* 追加のCSSスタイル */
+        .post {
+            margin-bottom: 20px;
+        }
+
+        .post img,
+        .post video {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
-        <header>
+    <header>
         <h1>掲示板サイト</h1>
     </header>
-<!-- モーダル -->
+    <!-- モーダル -->
     <div id="myModal" class="modal">
         <span class="close">&times;</span>
         <img class="modal-content" id="img01">
@@ -38,9 +50,11 @@
         </form>
     </div>
     
-  <div id="boardPage" class="page" style="display:none;">
+    <div id="boardPage" class="page" style="display:none;">
         <h2>投稿掲示板</h2>
-        <button id="logoutButton">ログアウト</button> <!-- ログアウトボタンを投稿フォームの上に移動 -->
+        <div id="logoutContainer">
+            <button id="logoutButton">ログアウト</button>
+        </div>
         <form id="postForm">
             <label for="comment">コメント:</label>
             <textarea id="comment" name="comment" required></textarea>
