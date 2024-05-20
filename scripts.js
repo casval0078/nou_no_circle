@@ -159,7 +159,6 @@ async function loadPosts() {
         postsDiv.appendChild(postDiv);
     });
 }
-    
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
         if (user) {
