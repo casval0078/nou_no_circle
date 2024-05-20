@@ -136,19 +136,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 投稿の読み込み
-    function loadPosts() {
-        db.collection('posts').orderBy('timestamp', 'desc').get().then((querySnapshot) => {
-            postsDiv.innerHTML = '';
-            querySnapshot.forEach((doc) => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const postDate = new Date(postData.timestamp.toDate()).toLocaleString();
-                postDiv.innerHTML = `<p>${postData.comment}</p><p>投稿者: ${postData.username}</p><p>投稿日時: ${postDate}</p>`;
-                postsDiv.appendChild(postDiv);
-            });
-        });
-    }
+async function loadPosts() {
+    const postsDiv = document.getElementById('posts');
+    postsDiv.innerHTML = '';
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        const postData = doc.data();
+        const timestamp = postData.timestamp.toDate();
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+        postDiv.innerHTML = `<p><strong>投稿者:</strong> ${postData.username}</p>
+                             <p>${postData.comment}</p>
+                             <p class="timestamp">${timestamp.toLocaleDateString('ja-JP', dateOptions)}</p>`;
+        if (postData.fileURL) {
+            const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
+            fileElement.src = postData.fileURL;
+            if (fileElement.tagName === 'VIDEO') {
+                fileElement.controls = true;
+            }
+            postDiv.appendChild(fileElement);
+        }
+        postsDiv.appendChild(postDiv);
+    });
+}
     
     // 認証状態の変更を監視
     auth.onAuthStateChanged((user) => {
