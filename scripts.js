@@ -81,49 +81,47 @@ signUpForm.addEventListener('submit', function(event) {
     });
 
     // 投稿フォームの送信イベント
-postForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const comment = document.getElementById('comment').value;
-    const file = document.getElementById('file').files[0]; // 添付ファイルを取得
-    const user = auth.currentUser;
-    if (comment && user) {
-        try {
-            let downloadURL = ''; // ダウンロードURL
-            if (file) {
-                // ストレージに動画ファイルをアップロード
-                const storageRef = ref(storage, `files/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                await uploadTask;
-
-                // アップロードした動画ファイルのダウンロードURLを取得
-                downloadURL = await getDownloadURL(storageRef);
+    postForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const comment = document.getElementById('comment').value;
+        const file = document.getElementById('file').files[0]; // 添付ファイルを取得
+        const user = auth.currentUser;
+        if (comment && user) {
+            try {
+                let downloadURL = ''; // ダウンロードURL
+                if (file) {
+                    // ストレージにファイルをアップロード
+                    const storageRef = ref(storage, `files/${file.name}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    await uploadTask;
+    
+                    // アップロードしたファイルのダウンロードURLを取得
+                    downloadURL = await getDownloadURL(storageRef);
+                }
+    
+                // データベースに投稿を追加
+                await addDoc(collection(db, 'posts'), {
+                    uid: user.uid,
+                    username: user.displayName,
+                    comment: comment,
+                    fileURL: downloadURL,
+                    timestamp: serverTimestamp() // 投稿日時を保存
+                });
+    
+                // 投稿後にフォームをクリア
+                document.getElementById('comment').value = '';
+                document.getElementById('file').value = '';
+    
+                // 投稿を読み込み
+                loadPosts();
+            } catch (error) {
+                alert(error.message);
             }
-
-            // データベースに投稿を追加
-            await addDoc(collection(db, 'posts'), {
-                uid: user.uid,
-                username: user.displayName, // ユーザー名を追加
-                comment: comment,
-                fileURL: downloadURL, // 動画のダウンロードURLを追加
-                timestamp: serverTimestamp()
-            });
-
-            // 投稿後にフォームをクリア
-            document.getElementById('comment').value = '';
-            document.getElementById('file').value = '';
-
-            // 投稿を読み込み
-            loadPosts();
-        } catch (error) {
-            alert(error.message);
+        } else {
+            alert('コメントを入力してください');
         }
-    } else {
-        alert('コメントを入力してください');
-    }
-});
-
-
-
+    });
+  
   querySnapshot.forEach((doc) => {
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
@@ -155,7 +153,11 @@ postForm.addEventListener('submit', async function(event) {
             const postDiv = document.createElement('div');
             postDiv.className = 'post';
             const postData = doc.data();
-            postDiv.innerHTML = `<p><strong>${auth.currentUser.displayName}: </strong>${postData.comment}</p>`; // ユーザー名を表示
+            const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
+            const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
+            postDiv.innerHTML = `
+                <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
+            `;
             if (postData.fileURL) {
                 const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
                 fileElement.src = postData.fileURL;
