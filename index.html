@@ -13,8 +13,13 @@
 
         .post img,
         .post video {
-            max-width: 100%;
-            height: auto;
+            max-width: 100%; /* 画像や動画を親要素に合わせて表示 */
+            height: auto; /* アスペクト比を保持して表示 */
+            display: block; /* 不要な余白を削除 */
+            margin: 0 auto; /* 水平方向に中央揃え */
+            border: 1px solid #ddd; /* グレーの枠線を追加 */
+            border-radius: 5px; /* 角丸 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 影を追加 */
         }
     </style>
 </head>
