@@ -96,28 +96,29 @@
             const logoutButton = document.getElementById('logoutButton');
             const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
-            const boardPageTitle = document.getElementById('boardPageTitle'); // ボードページのタイトル要素を取得
 
-           // ログインフォームの送信イベント
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                // ログイン成功時にユーザー名を取得
-                const user = userCredential.user;
-                const username = user.displayName; // ユーザー名を取得
-                // ログイン成功時に投稿掲示板のタイトルの横にログイン者名を表示
-                boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${username}`;
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('boardPage').style.display = 'block';
-                loadPosts(); // 引数を削除
-            })
-            .catch((error) => {
-                alert(error.message);
+            // ログインフォームの送信イベント
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(async (userCredential) => {
+                        const user = userCredential.user;
+                        // ユーザー名を取得
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const username = userDoc.data().name;
+
+                        // ログイン成功時に投稿掲示板のタイトルの横にログイン者名を表示
+                        document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
+                        document.getElementById('loginPage').style.display = 'none';
+                        document.getElementById('boardPage').style.display = 'block';
+                        loadPosts(); // 引数を削除
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
             });
-    });
 
             // サインアップフォームの送信イベント
             signUpForm.addEventListener('submit', function(event) {
@@ -175,10 +176,14 @@
                             downloadURL = await getDownloadURL(storageRef);
                         }
 
+                        // ユーザー名を取得
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const username = userDoc.data().name;
+
                         // データベースに投稿を追加
-                        await addDoc(collection(db, 'posts'), {
+                            await addDoc(collection(db, 'posts'), {
                             uid: user.uid,
-                            username: user.displayName,
+                            username: username,
                             comment: comment,
                             fileURL: downloadURL,
                             timestamp: serverTimestamp() // 投稿日時を保存
@@ -200,7 +205,7 @@
 
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
-                auth.signOut().then(() => {
+                signOut(auth).then(() => {
                     document.getElementById('boardPage').style.display = 'none';
                     document.getElementById('loginPage').style.display = 'block';
                 });
@@ -233,18 +238,18 @@
                 });
             }
 
-                       // 認証状態の変更を監視
-            auth.onAuthStateChanged((user) => {
+            // 認証状態の変更を監視
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    // ログイン済みの場合の処理
-                    const username = user.displayName; // ユーザー名を取得
-                    // 投稿掲示板のタイトルの横にログイン者名を表示
+                    // ユーザーがログインしている場合
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const username = userDoc.data().name;
                     document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
                 } else {
-                    // 未ログインの場合の処理
+                    // ユーザーがログインしていない場合
                     document.getElementById('boardPageTitle').innerText = '投稿掲示板';
                     boardPage.style.display = 'none';
                     loginPage.style.display = 'block';
