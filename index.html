@@ -43,7 +43,7 @@
     </div>
     
     <div id="boardPage" class="page" style="display:none;">
-        <h2>投稿掲示板</h2>
+        <h2 id="boardPageTitle">投稿掲示板</h2>
         <div id="logoutContainer">
             <button id="logoutButton">ログアウト</button>
         </div>
@@ -91,6 +91,7 @@
             const logoutButton = document.getElementById('logoutButton');
             const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
+            const boardPageTitle = document.getElementById('boardPageTitle');
 
             // ログインフォームの送信イベント
             loginForm.addEventListener('submit', function(event) {
@@ -102,7 +103,7 @@
                         // ログイン成功時にユーザー名を取得
                         const user = userCredential.user;
                         // ログイン成功時に投稿掲示板のタイトルの横にログイン者名を表示
-                        document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${user.email}`;
+                        boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${user.email}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts(); // 引数を削除
@@ -193,15 +194,14 @@
 
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
-                auth.signOut().then(() => {
-                    document.getElementById('boardPage').style.display = 'none';
-                    document.getElementById('loginPage').style.display = 'block';
+                signOut(auth).then(() => {
+                    boardPage.style.display = 'none';
+                    loginPage.style.display = 'block';
                 });
             });
 
             // 投稿の読み込み
             async function loadPosts() {
-                const postsDiv = document.getElementById('posts');
                 postsDiv.innerHTML = '';
                 const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
                 const querySnapshot = await getDocs(q);
@@ -230,16 +230,16 @@
             }
 
             // 認証状態の変更を監視
-            auth.onAuthStateChanged((user) => {
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
                     // ログイン済みの場合の処理
-                    document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${username}`;
+                    boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${user.email}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
                 } else {
                     // 未ログインの場合の処理
-                    document.getElementById('boardPageTitle').innerText = '投稿掲示板';
+                    boardPageTitle.innerText = '投稿掲示板';
                     boardPage.style.display = 'none';
                     loginPage.style.display = 'block';
                 }
