@@ -199,11 +199,7 @@ postForm.addEventListener('submit', async function(event) {
                     postsDiv.appendChild(videoElement);
                 } else {
                     // 画像ファイルでも動画ファイルでもない場合はダウンロードリンクを生成
-                    const fileLink = document.createElement('a');
-                    fileLink.href = URL.createObjectURL(file);
-                    fileLink.innerText = 'ファイルをダウンロード';
-                    fileLink.target = '_blank';
-                    postsDiv.appendChild(fileLink);
+                    downloadURL = URL.createObjectURL(file); // ダウンロードURLはファイルのURLとする
                 }
 
                 // ストレージにファイルをアップロード
@@ -212,7 +208,7 @@ postForm.addEventListener('submit', async function(event) {
                 await uploadTask;
 
                 // アップロードしたファイルのダウンロードURLを取得
-                downloadURL = await getDownloadURL(storageRef);
+                downloadURL = downloadURL || await getDownloadURL(storageRef);
             }
 
             // ユーザーネームを取得
@@ -241,7 +237,6 @@ postForm.addEventListener('submit', async function(event) {
         alert('コメントを入力してください');
     }
 });
-
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
