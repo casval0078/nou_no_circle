@@ -13,7 +13,7 @@
 
         .post img,
         .post video {
-            max-width: 100%;
+            max-width: 200px; /* 縮小表示 */
             height: auto;
             cursor: pointer; /* クリックやタップで全画面表示 */
         }
@@ -99,14 +99,15 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        // ログイン成功時にユーザー名を取得
+                    .then(async (userCredential) => {
                         const user = userCredential.user;
-                        // ログイン成功時に投稿掲示板のタイトルの横にログイン者名を表示
-                        boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${user.email}`;
+                        // ログイン成功時にユーザーネームを取得
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const userName = userDoc.data().name;
+                        boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
-                        loadPosts(); // 引数を削除
+                        loadPosts();
                     })
                     .catch((error) => {
                         alert(error.message);
@@ -169,10 +170,14 @@
                             downloadURL = await getDownloadURL(storageRef);
                         }
 
+                        // ユーザーネームを取得
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const userName = userDoc.data().name;
+
                         // データベースに投稿を追加
                         await addDoc(collection(db, 'posts'), {
                             uid: user.uid,
-                            username: user.email, // ユーザー名をメールアドレスから取得
+                            username: userName, // ユーザーネームを使用
                             comment: comment,
                             fileURL: downloadURL,
                             timestamp: serverTimestamp() // 投稿日時を保存
@@ -230,10 +235,12 @@
             }
 
             // 認証状態の変更を監視
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     // ログイン済みの場合の処理
-                    boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${user.email}`;
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const userName = userDoc.data().name;
+                    boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${userName}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
