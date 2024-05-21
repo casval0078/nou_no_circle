@@ -221,22 +221,39 @@ async function loadPosts() {
             <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
         `;
         if (postData.fileURL) {
-            const fileElement = document.createElement(postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/) ? 'img' : 'video');
-            fileElement.src = postData.fileURL;
-            fileElement.style.maxWidth = '200px'; // 縮小表示
-            fileElement.style.height = 'auto';
-            fileElement.onclick = function() {
-                window.open(postData.fileURL); // クリックで全画面表示
-            };
-            if (fileElement.tagName === 'VIDEO') {
-                fileElement.controls = true;
+            if (postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/)) {
+                // 画像ファイルの場合
+                const imgElement = document.createElement('img');
+                imgElement.src = postData.fileURL;
+                imgElement.style.maxWidth = '200px'; // 縮小表示
+                imgElement.style.height = 'auto';
+                imgElement.onclick = function() {
+                    window.open(postData.fileURL); // クリックで全画面表示
+                };
+                postDiv.appendChild(imgElement);
+            } else if (postData.fileURL.match(/\.(mp4|webm|ogg|mov)$/)) {
+                // 動画ファイルの場合
+                const videoElement = document.createElement('video');
+                videoElement.src = postData.fileURL;
+                videoElement.style.maxWidth = '200px'; // 縮小表示
+                videoElement.style.height = 'auto';
+                videoElement.controls = true;
+                videoElement.onclick = function() {
+                    window.open(postData.fileURL); // クリックで全画面表示
+                };
+                postDiv.appendChild(videoElement);
+            } else {
+                // その他のファイルの場合
+                const fileLink = document.createElement('a');
+                fileLink.href = postData.fileURL;
+                fileLink.innerText = 'ファイルをダウンロード';
+                fileLink.target = '_blank';
+                postDiv.appendChild(fileLink);
             }
-            postDiv.appendChild(fileElement);
         }
         postsDiv.appendChild(postDiv);
     });
 }
-
 
             // 認証状態の変更を監視
             onAuthStateChanged(auth, async (user) => {
