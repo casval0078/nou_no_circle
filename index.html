@@ -222,35 +222,33 @@ async function loadPosts() {
         `;
         if (postData.fileURL) {
             const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
-            if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
-                // 画像ファイルの場合
-                const imgElement = document.createElement('img');
-                imgElement.src = postData.fileURL;
-                imgElement.style.maxWidth = '200px'; // 縮小表示
-                imgElement.style.height = 'auto';
-                imgElement.onclick = function() {
-                    window.open(postData.fileURL); // クリックで全画面表示
-                };
-                postDiv.appendChild(imgElement);
-            } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
-                // 動画ファイルの場合
-const videoElement = document.createElement('video');
-videoElement.src = postData.fileURL;
-videoElement.style.maxWidth = '200px'; // 縮小表示
-videoElement.style.height = 'auto';
-videoElement.controls = true; // 再生コントロールを表示
-videoElement.onclick = function() {
-    videoElement.play(); // クリックで再生開始
-};
-postDiv.appendChild(videoElement);
-            } else {
-                // その他のファイルの場合
-                const fileLink = document.createElement('a');
-                fileLink.href = postData.fileURL;
-                fileLink.innerText = 'ファイルをダウンロード';
-                fileLink.target = '_blank';
-                postDiv.appendChild(fileLink);
-            }
+            // 画像ファイルの場合
+if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
+    const imgElement = document.createElement('img');
+    imgElement.src = postData.fileURL;
+    imgElement.style.maxWidth = '200px'; // 縮小表示
+    imgElement.style.height = 'auto';
+    imgElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
+    imgElement.onclick = function() {
+        window.open(postData.fileURL); // クリックで全画面表示
+    };
+    postDiv.appendChild(imgElement);
+} else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+    // 動画ファイルの場合
+    const videoElement = document.createElement('video');
+    videoElement.src = postData.fileURL;
+    videoElement.style.maxWidth = '200px'; // 縮小表示
+    videoElement.style.height = 'auto';
+    videoElement.controls = true; // 再生コントロールを表示
+    postDiv.appendChild(videoElement);
+} else {
+    // その他のファイルの場合
+    const fileLink = document.createElement('a');
+    fileLink.href = postData.fileURL;
+    fileLink.innerText = 'ファイルをダウンロード';
+    fileLink.target = '_blank';
+    postDiv.appendChild(fileLink);
+}
         }
         postsDiv.appendChild(postDiv);
     });
