@@ -175,31 +175,34 @@ postForm.addEventListener('submit', async function(event) {
     const user = auth.currentUser;
     if (comment && user) {
         try {
+            let fileElement; // ファイルを表示する要素
             let downloadURL = ''; // ダウンロードURL
             if (file) {
                 // 画像ファイルかどうかを判断
                 if (isImage(file)) {
                     // 画像ファイルの場合は画像として表示
-                    const imgElement = document.createElement('img');
-                    imgElement.src = URL.createObjectURL(file);
-                    imgElement.style.maxWidth = '200px'; // 縮小表示
-                    imgElement.style.height = 'auto';
-                    imgElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
-                    imgElement.onclick = function() {
+                    fileElement = document.createElement('img');
+                    fileElement.src = URL.createObjectURL(file);
+                    fileElement.style.maxWidth = '200px'; // 縮小表示
+                    fileElement.style.height = 'auto';
+                    fileElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
+                    fileElement.onclick = function() {
                         window.open(URL.createObjectURL(file)); // クリックで全画面表示
                     };
-                    postsDiv.appendChild(imgElement);
                 } else if (isVideo(file)) {
                     // 動画ファイルの場合は動画として表示
-                    const videoElement = document.createElement('video');
-                    videoElement.src = URL.createObjectURL(file);
-                    videoElement.style.maxWidth = '200px'; // 縮小表示
-                    videoElement.style.height = 'auto';
-                    videoElement.controls = true; // 再生コントロールを表示
-                    postsDiv.appendChild(videoElement);
+                    fileElement = document.createElement('video');
+                    fileElement.src = URL.createObjectURL(file);
+                    fileElement.style.maxWidth = '200px'; // 縮小表示
+                    fileElement.style.height = 'auto';
+                    fileElement.controls = true; // 再生コントロールを表示
                 } else {
                     // その他のファイルの場合はダウンロードリンクを生成
-                    downloadURL = URL.createObjectURL(file); // ダウンロードURLはファイルのURLとする
+                    const fileLink = document.createElement('a');
+                    fileLink.href = URL.createObjectURL(file);
+                    fileLink.innerText = 'ファイルをダウンロード';
+                    fileLink.target = '_blank';
+                    fileElement = fileLink;
                 }
 
                 // ストレージにファイルをアップロード
@@ -208,7 +211,7 @@ postForm.addEventListener('submit', async function(event) {
                 await uploadTask;
 
                 // アップロードしたファイルのダウンロードURLを取得
-                downloadURL = downloadURL || await getDownloadURL(storageRef);
+                downloadURL = await getDownloadURL(storageRef);
             }
 
             // ユーザーネームを取得
@@ -230,6 +233,11 @@ postForm.addEventListener('submit', async function(event) {
 
             // 投稿を読み込み
             loadPosts();
+
+            // 投稿されたファイルを表示
+            if (fileElement) {
+                postsDiv.appendChild(fileElement);
+            }
         } catch (error) {
             alert(error.message);
         }
@@ -237,6 +245,7 @@ postForm.addEventListener('submit', async function(event) {
         alert('コメントを入力してください');
     }
 });
+
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
