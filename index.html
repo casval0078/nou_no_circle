@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         /* 追加のCSSスタイル */
+        body {
+            background: url('https://github.com/casval0078/nou_no_circle/blob/main/FwATKJFagAAPZOD.jpg') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: blur(5px);
+        }
+
+        .page {
+            background-color: rgba(255, 255, 255, 0.8); /* 背景の透過 */
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+        }
+
         .post {
             margin-bottom: 20px;
         }
@@ -16,6 +29,16 @@
             max-width: 200px; /* 縮小表示 */
             height: auto;
             cursor: pointer; /* クリックやタップで全画面表示 */
+        }
+
+        #boardHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #posts {
+            width: 100%;
         }
     </style>
 </head>
@@ -43,8 +66,8 @@
     </div>
     
     <div id="boardPage" class="page" style="display:none;">
-        <h2 id="boardPageTitle">投稿掲示板</h2>
-        <div id="logoutContainer">
+        <div id="boardHeader">
+            <h2 id="boardPageTitle"></h2>
             <button id="logoutButton">ログアウト</button>
         </div>
         <form id="postForm">
@@ -57,15 +80,12 @@
         <div id="posts"></div>
     </div>
     
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
             authDomain: "nou-no-circle.firebaseapp.com",
@@ -76,7 +96,6 @@
             measurementId: "G-TWBV38P13D"
         };
 
-        // Firebase初期化
         const firebaseApp = initializeApp(firebaseConfig);
         const auth = getAuth(firebaseApp);
         const db = getFirestore(firebaseApp);
@@ -93,7 +112,6 @@
             const postsDiv = document.getElementById('posts');
             const boardPageTitle = document.getElementById('boardPageTitle');
 
-            // ログインフォームの送信イベント
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const email = document.getElementById('email').value;
@@ -101,10 +119,9 @@
                 signInWithEmailAndPassword(auth, email, password)
                     .then(async (userCredential) => {
                         const user = userCredential.user;
-                        // ログイン成功時にユーザーネームを取得
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
-                        document.getElementById('boardPageTitle').innerText = `投稿掲示板 - ログイン中: ${userName}`;
+                        boardPageTitle.innerText = `${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
@@ -114,140 +131,118 @@
                     });
             });
 
-            // サインアップフォームの送信イベント
-signUpForm.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const name = document.getElementById('name').value; // 追加：ユーザー名を取得
-    const email = document.getElementById('signUpEmail').value;
-    const password = document.getElementById('signUpPassword').value;
-    createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            // ユーザー名とパスワードもデータベースに保存
-            return setDoc(doc(db, 'users', user.uid), {
-                name: name,
-                email: user.email,
-                password: password // ここにパスワードを保存（推奨されません）
+            signUpForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('signUpEmail').value;
+                const password = document.getElementById('signUpPassword').value;
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        return setDoc(doc(db, 'users', user.uid), {
+                            name: name,
+                            email: user.email,
+                            password: password
+                        });
+                    })
+                    .then(() => {
+                        alert('サインアップが成功しました。ログインしてください。');
+                        signUpForm.style.display = 'none';
+                        loginForm.style.display = 'block';
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
             });
-        })
-        .then(() => {
-            alert('サインアップが成功しました。ログインしてください。');
-            signUpForm.style.display = 'none';
-            loginForm.style.display = 'block';
-        })
-        .catch((error) => {
-            alert(error.message);
-        });
-});
 
-            // サインアップリンククリックイベント
             signUpLink.addEventListener('click', function() {
                 loginForm.style.display = 'none';
                 signUpForm.style.display = 'block';
             });
 
-            // ログインリンククリックイベント
             loginLink.addEventListener('click', function() {
                 signUpForm.style.display = 'none';
                 loginForm.style.display = 'block';
             });
-            
-            // 画像ファイルのMIMEタイプ
-            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
-            // 動画ファイルのMIMEタイプ
+            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
             const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
 
-            // 画像かどうかを判断する関数
             function isImage(file) {
                 return imageMimeTypes.includes(file.type);
             }
 
-            // 動画かどうかを判断する関数
             function isVideo(file) {
                 return videoMimeTypes.includes(file.type);
             }
 
-            // 投稿フォームの送信イベント
-postForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const comment = document.getElementById('comment').value;
-    const file = document.getElementById('file').files[0]; // 添付ファイルを取得
-    const user = auth.currentUser;
-    if (comment && user) {
-        try {
-            let fileElement; // ファイルを表示する要素
-            let downloadURL = ''; // ダウンロードURL
-            if (file) {
-                // 画像ファイルかどうかを判断
-                if (isImage(file)) {
-                    // 画像ファイルの場合は画像として表示
-                    fileElement = document.createElement('img');
-                    fileElement.src = URL.createObjectURL(file);
-                    fileElement.style.maxWidth = '200px'; // 縮小表示
-                    fileElement.style.height = 'auto';
-                    fileElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
-                    fileElement.onclick = function() {
-                        window.open(URL.createObjectURL(file)); // クリックで全画面表示
-                    };
-                } else if (isVideo(file)) {
-                    // 動画ファイルの場合は動画として表示
-                    fileElement = document.createElement('video');
-                    fileElement.src = URL.createObjectURL(file);
-                    fileElement.style.maxWidth = '200px'; // 縮小表示
-                    fileElement.style.height = 'auto';
-                    fileElement.controls = true; // 再生コントロールを表示
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const comment = document.getElementById('comment').value;
+                const file = document.getElementById('file').files[0];
+                const user = auth.currentUser;
+                if (comment && user) {
+                    try {
+                        let fileElement;
+                        let downloadURL = '';
+                        if (file) {
+                            if (isImage(file)) {
+                                fileElement = document.createElement('img');
+                                fileElement.src = URL.createObjectURL(file);
+                                fileElement.style.maxWidth = '200px';
+                                fileElement.style.height = 'auto';
+                                fileElement.style.cursor = 'pointer';
+                                fileElement.onclick = function() {
+                                    window.open(URL.createObjectURL(file));
+                                };
+                            } else if (isVideo(file)) {
+                                fileElement = document.createElement('video');
+                                fileElement.src = URL.createObjectURL(file);
+                                fileElement.style.maxWidth = '200px';
+                                fileElement.style.height = 'auto';
+                                fileElement.controls = true;
+                            } else {
+                                const fileLink = document.createElement('a');
+                                fileLink.href = URL.createObjectURL(file);
+                                fileLink.innerText = 'ファイルをダウンロード';
+                                fileLink.target = '_blank';
+                                fileElement = fileLink;
+                            }
+
+                            const storageRef = ref(storage, `files/${file.name}`);
+                            const uploadTask = uploadBytesResumable(storageRef, file);
+                            await uploadTask;
+
+                            downloadURL = await getDownloadURL(storageRef);
+                        }
+
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const userName = userDoc.data().name;
+
+                        await addDoc(collection(db, 'posts'), {
+                            uid: user.uid,
+                            username: userName,
+                            comment: comment,
+                            fileURL: downloadURL,
+                            timestamp: serverTimestamp()
+                        });
+
+                        document.getElementById('comment').value = '';
+                        document.getElementById('file').value = '';
+
+                        loadPosts();
+
+                        if (fileElement) {
+                            postsDiv.appendChild(fileElement);
+                        }
+                    } catch (error) {
+                        alert(error.message);
+                    }
                 } else {
-                    // その他のファイルの場合はダウンロードリンクを生成
-                    const fileLink = document.createElement('a');
-                    fileLink.href = URL.createObjectURL(file);
-                    fileLink.innerText = 'ファイルをダウンロード';
-                    fileLink.target = '_blank';
-                    fileElement = fileLink;
+                    alert('コメントを入力してください');
                 }
-
-                // ストレージにファイルをアップロード
-                const storageRef = ref(storage, `files/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                await uploadTask;
-
-                // アップロードしたファイルのダウンロードURLを取得
-                downloadURL = await getDownloadURL(storageRef);
-            }
-
-            // ユーザーネームを取得
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const userName = userDoc.data().name;
-
-            // データベースに投稿を追加
-            await addDoc(collection(db, 'posts'), {
-                uid: user.uid,
-                username: userName, // ユーザーネームを使用
-                comment: comment,
-                fileURL: downloadURL,
-                timestamp: serverTimestamp() // 投稿日時を保存
             });
 
-            // 投稿後にフォームをクリア
-            document.getElementById('comment').value = '';
-            document.getElementById('file').value = '';
-
-            // 投稿を読み込み
-            loadPosts();
-
-            // 投稿されたファイルを表示
-            if (fileElement) {
-                postsDiv.appendChild(fileElement);
-            }
-        } catch (error) {
-            alert(error.message);
-        }
-    } else {
-        alert('コメントを入力してください');
-    }
-});
-
-            // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
                     boardPage.style.display = 'none';
@@ -255,7 +250,6 @@ postForm.addEventListener('submit', async function(event) {
                 });
            });
 
-            // 投稿の読み込み
             async function loadPosts() {
                 const postsDiv = document.getElementById('posts');
                 postsDiv.innerHTML = '';
@@ -265,34 +259,31 @@ postForm.addEventListener('submit', async function(event) {
                     const postDiv = document.createElement('div');
                     postDiv.className = 'post';
                     const postData = doc.data();
-                    const timestamp = postData.timestamp.toDate(); // Firebase Timestamp を JavaScript の Date オブジェクトに変換
-                    const dateString = timestamp.toLocaleString(); // 日付を文字列に変換
+                    const timestamp = postData.timestamp.toDate();
+                    const dateString = timestamp.toLocaleString();
                     postDiv.innerHTML = `
                         <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
                     `;
                     if (postData.fileURL) {
                         const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
-                        // 画像ファイルの場合
                         if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
                             const imgElement = document.createElement('img');
                             imgElement.src = postData.fileURL;
-                            imgElement.style.maxWidth = '200px'; // 縮小表示
+                            imgElement.style.maxWidth = '200px';
                             imgElement.style.height = 'auto';
-                            imgElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
+                            imgElement.style.cursor = 'pointer';
                             imgElement.onclick = function() {
-                                window.open(postData.fileURL); // クリックで全画面表示
+                                window.open(postData.fileURL);
                             };
                             postDiv.appendChild(imgElement);
                         } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
-                            // 動画ファイルの場合
                             const videoElement = document.createElement('video');
                             videoElement.src = postData.fileURL;
-                            videoElement.style.maxWidth = '200px'; // 縮小表示
+                            videoElement.style.maxWidth = '200px';
                             videoElement.style.height = 'auto';
-                            videoElement.controls = true; // 再生コントロールを表示
+                            videoElement.controls = true;
                             postDiv.appendChild(videoElement);
                         } else {
-                            // その他のファイルの場合
                             const fileLink = document.createElement('a');
                             fileLink.href = postData.fileURL;
                             fileLink.innerText = 'ファイルをダウンロード';
@@ -304,19 +295,16 @@ postForm.addEventListener('submit', async function(event) {
                 });
             }
 
-            // 認証状態の変更を監視
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    // ログイン済みの場合の処理
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `投稿掲示板 - ログイン中: ${userName}`;
+                    boardPageTitle.innerText = `${userName}`;
                     boardPage.style.display = 'block';
                     loginPage.style.display = 'none';
                     loadPosts();
                 } else {
-                    // 未ログインの場合の処理
-                    boardPageTitle.innerText = '投稿掲示板';
+                    boardPageTitle.innerText = '';
                     boardPage.style.display = 'none';
                     loginPage.style.display = 'block';
                 }
@@ -325,5 +313,3 @@ postForm.addEventListener('submit', async function(event) {
     </script>
 </body>
 </html>
-
-
