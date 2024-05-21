@@ -150,52 +150,82 @@ loginForm.addEventListener('submit', function(event) {
                 signUpForm.style.display = 'none';
                 loginForm.style.display = 'block';
             });
+            
+            // 画像ファイルのMIMEタイプ
+const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+// 画像かどうかを判断する関数
+function isImage(file) {
+    return imageMimeTypes.includes(file.type);
+}
 
             // 投稿フォームの送信イベント
-            postForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                const comment = document.getElementById('comment').value;
-                const file = document.getElementById('file').files[0]; // 添付ファイルを取得
-                const user = auth.currentUser;
-                if (comment && user) {
-                    try {
-                        let downloadURL = ''; // ダウンロードURL
-                        if (file) {
-                            // ストレージにファイルをアップロード
-                            const storageRef = ref(storage, `files/${file.name}`);
-                            const uploadTask = uploadBytesResumable(storageRef, file);
-                            await uploadTask;
-
-                            // アップロードしたファイルのダウンロードURLを取得
-                            downloadURL = await getDownloadURL(storageRef);
-                        }
-
-                        // ユーザーネームを取得
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-
-                        // データベースに投稿を追加
-                        await addDoc(collection(db, 'posts'), {
-                            uid: user.uid,
-                            username: userName, // ユーザーネームを使用
-                            comment: comment,
-                            fileURL: downloadURL,
-                            timestamp: serverTimestamp() // 投稿日時を保存
-                        });
-
-                        // 投稿後にフォームをクリア
-                        document.getElementById('comment').value = '';
-                        document.getElementById('file').value = '';
-
-                        // 投稿を読み込み
-                        loadPosts();
-                    } catch (error) {
-                        alert(error.message);
-                    }
+postForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const file = document.getElementById('file').files[0]; // 添付ファイルを取得
+    const user = auth.currentUser;
+    if (comment && user) {
+        try {
+            let downloadURL = ''; // ダウンロードURL
+            if (file) {
+                // 画像ファイルかどうかを判断
+                const isImageFile = isImage(file);
+                if (isImageFile) {
+                    // 画像ファイルの場合は画像として表示
+                    const imgElement = document.createElement('img');
+                    imgElement.src = URL.createObjectURL(file);
+                    imgElement.style.maxWidth = '200px'; // 縮小表示
+                    imgElement.style.height = 'auto';
+                    imgElement.style.cursor = 'pointer'; // クリックやタップで全画面表示
+                    imgElement.onclick = function() {
+                        window.open(URL.createObjectURL(file)); // クリックで全画面表示
+                    };
+                    postsDiv.appendChild(imgElement);
                 } else {
-                    alert('コメントを入力してください');
+                    // 画像ファイル以外の場合はダウンロードリンクを生成
+                    const fileLink = document.createElement('a');
+                    fileLink.href = URL.createObjectURL(file);
+                    fileLink.innerText = 'ファイルをダウンロード';
+                    fileLink.target = '_blank';
+                    postsDiv.appendChild(fileLink);
                 }
+
+                // ストレージにファイルをアップロード
+                const storageRef = ref(storage, `files/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                await uploadTask;
+
+                // アップロードしたファイルのダウンロードURLを取得
+                downloadURL = await getDownloadURL(storageRef);
+            }
+
+            // ユーザーネームを取得
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userName = userDoc.data().name;
+
+            // データベースに投稿を追加
+            await addDoc(collection(db, 'posts'), {
+                uid: user.uid,
+                username: userName, // ユーザーネームを使用
+                comment: comment,
+                fileURL: downloadURL,
+                timestamp: serverTimestamp() // 投稿日時を保存
             });
+
+            // 投稿後にフォームをクリア
+            document.getElementById('comment').value = '';
+            document.getElementById('file').value = '';
+
+            // 投稿を読み込み
+            loadPosts();
+        } catch (error) {
+            alert(error.message);
+        }
+    } else {
+        alert('コメントを入力してください');
+    }
+});
 
             // ログアウトボタンクリックイベント
             logoutButton.addEventListener('click', function() {
