@@ -154,12 +154,20 @@ loginForm.addEventListener('submit', function(event) {
             // 画像ファイルのMIMEタイプ
 const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
 
+// 動画ファイルのMIMEタイプ
+const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+
 // 画像かどうかを判断する関数
 function isImage(file) {
     return imageMimeTypes.includes(file.type);
 }
 
-            // 投稿フォームの送信イベント
+// 動画かどうかを判断する関数
+function isVideo(file) {
+    return videoMimeTypes.includes(file.type);
+}
+
+// 投稿フォームの送信イベント
 postForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     const comment = document.getElementById('comment').value;
@@ -170,8 +178,7 @@ postForm.addEventListener('submit', async function(event) {
             let downloadURL = ''; // ダウンロードURL
             if (file) {
                 // 画像ファイルかどうかを判断
-                const isImageFile = isImage(file);
-                if (isImageFile) {
+                if (isImage(file)) {
                     // 画像ファイルの場合は画像として表示
                     const imgElement = document.createElement('img');
                     imgElement.src = URL.createObjectURL(file);
@@ -182,8 +189,16 @@ postForm.addEventListener('submit', async function(event) {
                         window.open(URL.createObjectURL(file)); // クリックで全画面表示
                     };
                     postsDiv.appendChild(imgElement);
+                } else if (isVideo(file)) {
+                    // 動画ファイルの場合は動画として表示
+                    const videoElement = document.createElement('video');
+                    videoElement.src = URL.createObjectURL(file);
+                    videoElement.style.maxWidth = '200px'; // 縮小表示
+                    videoElement.style.height = 'auto';
+                    videoElement.controls = true; // 再生コントロールを表示
+                    postsDiv.appendChild(videoElement);
                 } else {
-                    // 画像ファイル以外の場合はダウンロードリンクを生成
+                    // 画像ファイルでも動画ファイルでもない場合はダウンロードリンクを生成
                     const fileLink = document.createElement('a');
                     fileLink.href = URL.createObjectURL(file);
                     fileLink.innerText = 'ファイルをダウンロード';
