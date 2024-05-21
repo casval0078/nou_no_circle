@@ -221,7 +221,8 @@ async function loadPosts() {
             <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
         `;
         if (postData.fileURL) {
-            if (postData.fileURL.match(/\.(jpeg|jpg|gif|png)$/)) {
+            const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
+            if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
                 // 画像ファイルの場合
                 const imgElement = document.createElement('img');
                 imgElement.src = postData.fileURL;
@@ -231,7 +232,7 @@ async function loadPosts() {
                     window.open(postData.fileURL); // クリックで全画面表示
                 };
                 postDiv.appendChild(imgElement);
-            } else if (postData.fileURL.match(/\.(mp4|webm|ogg|mov)$/)) {
+            } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
                 // 動画ファイルの場合
                 const videoElement = document.createElement('video');
                 videoElement.src = postData.fileURL;
