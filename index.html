@@ -234,15 +234,15 @@ async function loadPosts() {
                 postDiv.appendChild(imgElement);
             } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
                 // 動画ファイルの場合
-                const videoElement = document.createElement('video');
-                videoElement.src = postData.fileURL;
-                videoElement.style.maxWidth = '200px'; // 縮小表示
-                videoElement.style.height = 'auto';
-                videoElement.controls = true;
-                videoElement.onclick = function() {
-                    window.open(postData.fileURL); // クリックで全画面表示
-                };
-                postDiv.appendChild(videoElement);
+const videoElement = document.createElement('video');
+videoElement.src = postData.fileURL;
+videoElement.style.maxWidth = '200px'; // 縮小表示
+videoElement.style.height = 'auto';
+videoElement.controls = true; // 再生コントロールを表示
+videoElement.onclick = function() {
+    videoElement.play(); // クリックで再生開始
+};
+postDiv.appendChild(videoElement);
             } else {
                 // その他のファイルの場合
                 const fileLink = document.createElement('a');
