@@ -287,43 +287,6 @@ function formatComment(comment) {
     return comment.replace(/\n/g, '<br>');
 }
             
-// ファイルの表示処理
-function displayPost(doc) {
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-    const postData = doc.data();
-    const timestamp = postData.timestamp.toDate();
-    const dateString = timestamp.toLocaleString();
-    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
-    
-    // Display media if available
-    if (postData.fileURL && postData.fileType) {
-        if (postData.fileType.includes('image')) {
-            const imgElement = document.createElement('img');
-            imgElement.src = postData.fileURL;
-            imgElement.style.maxWidth = '200px';
-            imgElement.style.height = 'auto';
-            imgElement.style.cursor = 'pointer';
-            imgElement.onclick = function() {
-                window.open(postData.fileURL);
-            };
-            postDiv.appendChild(imgElement);
-        } else if (postData.fileType.includes('video')) {
-            const videoElement = document.createElement('video');
-            videoElement.src = postData.fileURL;
-            videoElement.style.maxWidth = '200px';
-            videoElement.style.height = 'auto';
-            videoElement.controls = true;
-            postDiv.appendChild(videoElement);
-        } else {
-            const fileLink = document.createElement('a');
-            fileLink.href = postData.fileURL;
-            fileLink.innerText = 'ファイルをダウンロード';
-            fileLink.target = '_blank';
-            postDiv.appendChild(fileLink);
-        }
-    }
-
     // 投稿者のみが投稿を削除できる機能
     const currentUser = auth.currentUser;
     if (currentUser && postData.uid === currentUser.uid) {
