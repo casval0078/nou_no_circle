@@ -316,38 +316,38 @@
 
             // 投稿の表示処理を修正
 function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `
-                    <p><strong>${postData.username}</strong> (${dateString})</p>
-                    <p>${postData.comment}</p>
-                    <div class="actions">
-                        <span class="icon" onclick="commentIconClickHandler('${doc.id}')">&#128172;</span> <!-- 吹き出しアイコン -->
-                        <span class="icon like-icon" onclick="likePost('${doc.id}')">&#10084;</span> <!-- ハートアイコン -->
-                        <span class="like-count">いいね: ${postData.likes || 0}</span>
-                    </div>
-                    <div id="comments_${doc.id}" class="comments"></div> <!-- コメント表示領域 -->
-                `;
-                // 投稿に対するコメント入力欄と投稿ボタンを表示
-                displayCommentInput(doc.id);
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `
+        <p><strong>${postData.username}</strong> (${dateString})</p>
+        <p>${postData.comment}</p>
+        <div class="actions">
+            <span class="icon" onclick="commentIconClickHandler('${doc.id}')">&#128172;</span> <!-- 吹き出しアイコン -->
+            <span class="icon like-icon" onclick="likePost('${doc.id}')">&#10084;</span> <!-- ハートアイコン -->
+            <span class="like-count">いいね: ${postData.likes || 0}</span>
+        </div>
+        <div id="comments_${doc.id}" class="comments"></div> <!-- コメント表示領域 -->
+    `;
+    // 投稿に対するコメント入力欄と投稿ボタンを表示
+    displayCommentInput(doc.id);
 
-                // コメントを表示
-                if (commentsMap.has(doc.id)) {
-                    displayComments(doc.id, commentsMap.get(doc.id));
-                }
-// 投稿に返信ボタンを表示
-                const replyButton = document.createElement('button');
-                replyButton.innerText = '返信を表示';
-                replyButton.onclick = function() {
-                    displayReplies(doc.id);
-                };
-                postDiv.appendChild(replyButton);
+    // コメントを表示
+    if (commentsMap.has(doc.id)) {
+        displayComments(doc.id, commentsMap.get(doc.id));
+    }
+    // 投稿に返信ボタンを表示
+    const replyButton = document.createElement('button');
+    replyButton.innerText = '返信を表示';
+    replyButton.onclick = function() {
+        displayReplies(doc.id);
+    };
+    postDiv.appendChild(replyButton);
 
-                postsDiv.appendChild(postDiv);
-            }
+    postsDiv.appendChild(postDiv);
+}
 
             function displayReplies(postId) {
                 const commentsDiv = document.getElementById(`comments_${postId}`);
