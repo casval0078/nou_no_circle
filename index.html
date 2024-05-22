@@ -322,17 +322,44 @@
 
             // 投稿の表示処理を修正
             function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `
-                    <p><strong>${postData.username}</strong> (${dateString})</p>
-                    <p>${postData.comment}</p>
-                `;
-                postsDiv.appendChild(postDiv);
-            }
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
+    
+    // Display media if available
+    if (postData.fileURL) {
+        const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
+        if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
+            const imgElement = document.createElement('img');
+            imgElement.src = postData.fileURL;
+            imgElement.style.maxWidth = '200px';
+            imgElement.style.height = 'auto';
+            imgElement.style.cursor = 'pointer';
+            imgElement.onclick = function() {
+                window.open(postData.fileURL);
+            };
+            postDiv.appendChild(imgElement);
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+            const videoElement = document.createElement('video');
+            videoElement.src = postData.fileURL;
+            videoElement.style.maxWidth = '200px';
+            videoElement.style.height = 'auto';
+            videoElement.controls = true;
+            postDiv.appendChild(videoElement);
+        } else {
+            const fileLink = document.createElement('a');
+            fileLink.href = postData.fileURL;
+            fileLink.innerText = 'ファイルをダウンロード';
+            fileLink.target = '_blank';
+            postDiv.appendChild(fileLink);
+        }
+    }
+    postsDiv.appendChild(postDiv);
+}
+
 
             // Load more posts when scrolling to the bottom
             window.onscroll = function() {
