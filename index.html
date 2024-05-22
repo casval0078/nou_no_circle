@@ -291,17 +291,21 @@
                 }
             });
 
-            function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `
-                    <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
-                    <button class="commentButton">コメント</button>
-                    <button class="likeButton">いいね</button>
-                `;
+            // 投稿の表示処理を修正
+function displayPost(doc) {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `
+        <p><strong>${postData.username}</strong> (${dateString}): ${postData.comment}</p>
+        <div class="actions">
+            <span class="icon" onclick="commentIconClickHandler('${doc.id}')">&#128172;</span> <!-- 吹き出しアイコン -->
+            <span class="icon" onclick="likePost('${doc.id}')">&#10084;</span> <!-- ハートアイコン -->
+        </div>
+        <div id="comments_${doc.id}" class="comments"></div> <!-- コメント表示領域 -->
+    `;
                 // Display media if available
                 if (postData.fileURL) {
                     const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
@@ -330,22 +334,16 @@
                         postDiv.appendChild(fileLink);
                     }
                 }
-                // Comment functionality
-                const commentButton = postDiv.querySelector('.commentButton');
-                commentButton.addEventListener('click', () => {
-                    // Add your comment functionality here
-                    alert('コメント機能が実装されていません');
-                });
+                // コメント入力欄と投稿ボタンを表示
+    displayCommentInput(doc.id);
 
-                // Like functionality
-                const likeButton = postDiv.querySelector('.likeButton');
-                likeButton.addEventListener('click', () => {
-                    // Add your like functionality here
-                    alert('いいね機能が実装されていません');
-                });
+    // コメントを表示
+    if (commentsMap.has(doc.id)) {
+        displayComments(doc.id, commentsMap.get(doc.id));
+    }
 
-                postsDiv.appendChild(postDiv);
-            }
+    postsDiv.appendChild(postDiv);
+}
 
             // Load more posts when scrolling to the bottom
             window.onscroll = function() {
@@ -368,6 +366,89 @@
                     loginPage.style.display = 'block';
                 }
             });
+
+            const commentsMap = new Map(); // 各投稿に紐づくコメントを管理するMap
+
+            // 吹き出しのアイコンをクリックしたときの処理
+const commentIconClickHandler = (postId) => {
+    const commentInput = document.getElementById(`commentInput_${postId}`);
+    commentInput.style.display = 'block';
+};
+            // 投稿ボタンをクリックしたときの処理
+const postCommentHandler = async (postId) => {
+    const commentInput = document.getElementById(`commentInput_${postId}`);
+    const commentText = document.getElementById(`commentText_${postId}`).value;
+    const user = auth.currentUser;
+    if (commentText && user) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userName = userDoc.data().name;
+            const commentsRef = collection(db, 'comments');
+            await addDoc(commentsRef, {
+                postId: postId,
+                uid: user.uid,
+                username: userName,
+                comment: commentText,
+                timestamp: serverTimestamp()
+            });
+            commentInput.style.display = 'none';
+            document.getElementById(`commentText_${postId}`).value = '';
+            loadPosts(); // コメントを追加した後、投稿を再読み込みして表示更新
+        } catch (error) {
+            console.error('Error adding comment: ', error);
+        }
+    } else {
+        alert('コメントを入力してください');
+    }
+};
+           // 各投稿にコメントを表示する関数
+function displayComments(postId, comments) {
+    const commentsDiv = document.getElementById(`comments_${postId}`);
+    commentsDiv.innerHTML = '';
+    comments.forEach(comment => {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        const timestamp = comment.timestamp.toDate();
+        const dateString = timestamp.toLocaleString();
+        commentDiv.innerHTML = `<p><strong>${comment.username}</strong> (${dateString}): ${comment.comment}</p>`;
+        commentsDiv.appendChild(commentDiv);
+    });
+}
+ // 各投稿にコメント入力欄と投稿ボタンを表示する関数
+function displayCommentInput(postId) {
+    const commentInputDiv = document.createElement('div');
+    commentInputDiv.className = 'comment-input';
+    commentInputDiv.id = `commentInput_${postId}`;
+    commentInputDiv.style.display = 'none'; // 初期状態は非表示
+    commentInputDiv.innerHTML = `
+        <textarea id="commentText_${postId}" placeholder="コメントを入力してください"></textarea>
+        <button onclick="postCommentHandler('${postId}')">投稿</button>
+    `;
+    document.getElementById(`post_${postId}`).appendChild(commentInputDiv);
+}
+            // 投稿にいいね機能を追加する関数
+async function likePost(postId) {
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userName = userDoc.data().name;
+            const likesRef = collection(db, 'likes');
+            await addDoc(likesRef, {
+                postId: postId,
+                uid: user.uid,
+                username: userName,
+                timestamp: serverTimestamp()
+            });
+            loadPosts(); // いいねを追加した後、投稿を再読み込みして表示更新
+        } catch (error) {
+            console.error('Error adding like: ', error);
+        }
+    } else {
+        alert('ログインしていないため、いいねを追加できません');
+    }
+}
+            
         });
     </script>
 </body>
