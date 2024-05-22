@@ -3,98 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>投稿掲示板</title>
+    <title>掲示板サイト</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        #boardPage {
-            display: none;
+        /* 追加のCSSスタイル */
+        body {
+            background: url('https://raw.githubusercontent.com/casval0078/nou_no_circle/main/FwATKJFagAAPZOD.jpg') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
+
+        .page {
+            background-color: rgba(255, 255, 255, 0.8); /* 背景の透過 */
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: auto;
+            max-height: 90vh; /* 画面に収まるように設定 */
+        }
+
         .post {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-            position: relative;
+            margin-bottom: 20px;
+            word-wrap: break-word; /* 長い投稿への対応 */
         }
-        .delete-link {
-            color: red;
-            cursor: pointer;
-            margin-left: 10px;
+
+        .post img,
+        .post video {
+            max-width: 100%; /* 画像や動画の幅を親要素に合わせる */
+            height: auto;
+            cursor: pointer; /* クリックやタップで全画面表示 */
+            display: block; /* インライン表示からブロック表示に変更 */
+            margin: 10px 0; /* 画像や動画の上下に余白を追加 */
+        }
+
+        #boardHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #posts {
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 追加のスタイル */
+        .comment {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 2px solid #ccc;
+        }
+
+        .comment-input {
+            margin-top: 10px;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .like-icon {
+            color: black;
+        }
+
+        .liked {
+            color: pink;
+        }
+
+        .file-link {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div id="loginPage">
+    <div id="loginPage" class="page">
         <h1>ログイン</h1>
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
+            <label for="email">メールアドレス:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">パスワード:</label>
+            <input type="password" id="password" name="password" required>
             <button type="submit">ログイン</button>
+            <p>アカウントをお持ちでないですか？ <a href="#" id="signUpLink">サインアップ</a></p>
         </form>
-        <a href="#" id="signUpLink">サインアップはこちら</a>
-    </div>
-
-    <div id="signUpPage" style="display: none;">
-        <h1>サインアップ</h1>
-        <form id="signUpForm">
-            <input type="text" id="name" placeholder="Name" required>
-            <input type="email" id="signUpEmail" placeholder="Email" required>
-            <input type="password" id="signUpPassword" placeholder="Password" required>
+        <form id="signUpForm" style="display:none;">
+            <label for="name">名前:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="signUpEmail">メールアドレス:</label>
+            <input type="email" id="signUpEmail" name="signUpEmail" required>
+            <label for="signUpPassword">パスワード:</label>
+            <input type="password" id="signUpPassword" name="signUpPassword" required>
             <button type="submit">サインアップ</button>
+            <p>すでにアカウントをお持ちですか？ <a href="#" id="loginLink">ログイン</a></p>
         </form>
-        <a href="#" id="loginLink">ログインはこちら</a>
     </div>
-
-    <div id="boardPage">
-        <h1 id="boardPageTitle">投稿掲示板</h1>
+    
+    <div id="boardPage" class="page" style="display:none;">
+        <div id="boardHeader">
+            <h2 id="boardPageTitle"></h2>
+            <button id="logoutButton">ログアウト</button>
+        </div>
         <form id="postForm">
-            <textarea id="comment" placeholder="コメントを入力" required></textarea>
-            <input type="file" id="file">
+            <label for="comment">コメント:</label>
+            <textarea id="comment" name="comment" required></textarea>
+            <label for="file">ファイル添付:</label>
+            <input type="file" id="file" name="file">
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
-        <button id="loadMoreButton" style="display:none;">さらに読み込む</button>
-        <button id="logoutButton">ログアウト</button>
+        <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
-    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
+            authDomain: "nou-no-circle.firebaseapp.com",
+            projectId: "nou-no-circle",
+            storageBucket: "nou-no-circle.appspot.com",
+            messagingSenderId: "756338805186",
+            appId: "1:756338805186:web:cb740e035ac611b5baae5b",
+            measurementId: "G-TWBV38P13D"
+        };
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+        const storage = getStorage(firebaseApp);
+
         document.addEventListener('DOMContentLoaded', function() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-                authDomain: "nou-no-circle.firebaseapp.com",
-                projectId: "nou-no-circle",
-                storageBucket: "nou-no-circle.appspot.com",
-                messagingSenderId: "756338805186",
-                appId: "1:756338805186:web:cb740e035ac611b5baae5b",
-                measurementId: "G-TWBV38P13D"
-            };
-            const app = firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            const storage = firebase.storage();
-
             const loginForm = document.getElementById('loginForm');
             const signUpForm = document.getElementById('signUpForm');
             const signUpLink = document.getElementById('signUpLink');
             const loginLink = document.getElementById('loginLink');
             const postForm = document.getElementById('postForm');
             const logoutButton = document.getElementById('logoutButton');
-            const boardPage = document.getElementById('boardPage');
+                        const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
             const boardPageTitle = document.getElementById('boardPageTitle');
             const loadMoreButton = document.getElementById('loadMoreButton');
+
             let lastVisiblePost;
 
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                auth.signInWithEmailAndPassword(email, password)
+                signInWithEmailAndPassword(auth, email, password)
                     .then(async (userCredential) => {
                         const user = userCredential.user;
-                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
                         boardPageTitle.innerText = `投稿掲示板: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
@@ -111,10 +185,10 @@
                 const name = document.getElementById('name').value;
                 const email = document.getElementById('signUpEmail').value;
                 const password = document.getElementById('signUpPassword').value;
-                auth.createUserWithEmailAndPassword(email, password)
+                createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
                         const user = userCredential.user;
-                        return db.collection('users').doc(user.uid).set({
+                        return setDoc(doc(db, 'users', user.uid), {
                             name: name,
                             email: user.email
                         });
@@ -150,6 +224,7 @@
                 return videoMimeTypes.includes(file.type);
             }
 
+            // ファイルのアップロード処理
             postForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const comment = document.getElementById('comment').value;
@@ -160,24 +235,25 @@
                         let fileElement;
                         let downloadURL = '';
                         if (file) {
-                            const storageRef = storage.ref(`files/${file.name}`);
-                            const uploadTask = storageRef.put(file);
+                            const storageRef = ref(storage, `files/${file.name}`);
+                            const uploadTask = uploadBytesResumable(storageRef, file);
 
                             uploadTask.on('state_changed', 
                                 (snapshot) => {
                                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                                     console.log('Upload is ' + progress + '% done');
+                                    // Display progress UI here
                                 }, 
                                 (error) => {
                                     alert('Upload failed: ' + error.message);
                                 }, 
                                 async () => {
-                                    downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                                    await savePost(user, comment, downloadURL, file.type);
+                                    downloadURL = await getDownloadURL(storageRef);
+                                    await savePost(user, comment, downloadURL, file.type); // ファイルの種類も保存
                                 }
                             );
                         } else {
-                            await savePost(user, comment, downloadURL, '');
+                            await savePost(user, comment, downloadURL, ''); // ファイルがない場合は空文字列を保存
                         }
                     } catch (error) {
                         alert(error.message);
@@ -188,16 +264,16 @@
             });
 
             async function savePost(user, comment, downloadURL, fileType) {
-                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
                 const userName = userDoc.data().name;
 
-                await db.collection('posts').add({
+                await addDoc(collection(db, 'posts'), {
                     uid: user.uid,
                     username: userName,
                     comment: comment,
                     fileURL: downloadURL,
-                    fileType: fileType,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    fileType: fileType, // ファイルの種類を保存
+                    timestamp: serverTimestamp()
                 });
 
                 document.getElementById('comment').value = '';
@@ -205,18 +281,21 @@
                 loadPosts();
             }
 
+            // コメントで改行を入れる関数
             function formatComment(comment) {
                 return comment.replace(/\n/g, '<br>');
             }
-
+            
+            // 投稿を表示する関数
             function displayPost(doc) {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
                 const postData = doc.data();
                 const timestamp = postData.timestamp.toDate();
                 const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString})：${postData.uid === auth.currentUser.uid ? '<span class="delete-link">削除</span>' : ''}<br>${formatComment(postData.comment)}</p>`;
+                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
                 
+                // Display media if available
                 if (postData.fileURL && postData.fileType) {
                     if (postData.fileType.includes('image')) {
                         const imgElement = document.createElement('img');
@@ -238,65 +317,86 @@
                     } else {
                         const fileLink = document.createElement('a');
                         fileLink.href = postData.fileURL;
-                        fileLink.textContent = 'ファイルを開く';
+                        fileLink.innerText = 'ファイルをダウンロード';
                         fileLink.target = '_blank';
                         postDiv.appendChild(fileLink);
                     }
                 }
-
-                if (postData.uid === auth.currentUser.uid) {
-                    const deleteLink = postDiv.querySelector('.delete-link');
-                    deleteLink.addEventListener('click', async function() {
+                
+                // 投稿者のみが投稿を削除できる機能
+                const currentUser = auth.currentUser;
+                if (currentUser && postData.uid === currentUser.uid) {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerText = '削除';
+                    deleteButton.addEventListener('click', async () => {
                         if (confirm('この投稿を削除しますか？')) {
-                            await db.collection('posts').doc(doc.id).delete();
-                            loadPosts();
+                            await deletePost(doc.id);
                         }
                     });
+                    postDiv.appendChild(deleteButton);
                 }
 
                 postsDiv.appendChild(postDiv);
             }
 
-            function loadPosts() {
-                postsDiv.innerHTML = '';
-                db.collection('posts').orderBy('timestamp', 'desc').limit(10).get().then((snapshot) => {
-                    lastVisiblePost = snapshot.docs[snapshot.docs.length - 1];
-                    snapshot.forEach((doc) => {
-                        displayPost(doc);
-                    });
-                    if (snapshot.docs.length === 10) {
-                        loadMoreButton.style.display = 'block';
-                    } else {
-                        loadMoreButton.style.display = 'none';
-                    }
+            // 投稿を削除する関数
+            async function deletePost(postId) {
+                await deleteDoc(doc(db, 'posts', postId));
+                loadPosts();
+            }
+            
+            logoutButton.addEventListener('click', function() {
+                signOut(auth).then(() => {
+                    boardPage.style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'block';
                 });
+            });
+
+            async function loadPosts() {
+                postsDiv.innerHTML = '';
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+                const querySnapshot = await getDocs(q);
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc);
+                });
+
+                if (querySnapshot.size < 10) {
+                    loadMoreButton.style.display = 'none';
+                } else {
+                    loadMoreButton.style.display = 'block';
+                }
             }
 
-            loadMoreButton.addEventListener('click', function() {
-                if (lastVisiblePost) {
-                    db.collection('posts').orderBy('timestamp', 'desc').startAfter(lastVisiblePost).limit(10).get().then((snapshot) => {
-                        lastVisiblePost = snapshot.docs[snapshot.docs.length - 1];
-                        snapshot.forEach((doc) => {
-                            displayPost(doc);
-                        });
-                        if (snapshot.docs.length < 10) {
-                            loadMoreButton.style.display = 'none';
-                        }
-                    });
+            loadMoreButton.addEventListener('click', async () => {
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+                const querySnapshot = await getDocs(q);
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc);
+                });
+
+                if (querySnapshot.size < 10) {
+                    loadMoreButton.style.display = 'none';
+                } else {
+                    loadMoreButton.style.display = 'block';
                 }
             });
 
-            logoutButton.addEventListener('click', function() {
-                auth.signOut().then(() => {
-                    document.getElementById('loginPage').style.display = 'block';
-                    document.getElementById('boardPage').style.display = 'none';
-                }).catch((error) => {
-                    alert(error.message);
-                });
-            });
+            // Load more posts when scrolling to the bottom
+            window.onscroll = function() {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                    loadMoreButton.click();
+                }
+            };
 
-            auth.onAuthStateChanged((user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const userName = userDoc.data().name;
+                    boardPageTitle.innerText = `投稿掲示板: ${userName}`;
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
@@ -309,3 +409,4 @@
     </script>
 </body>
 </html>
+
