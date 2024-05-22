@@ -99,7 +99,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, startAfter, serverTimestamp, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -118,164 +118,179 @@
         const storage = getStorage(firebaseApp);
 
         document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.getElementById('loginForm');
-            const signUpForm = document.getElementById('signUpForm');
-            const signUpLink = document.getElementById('signUpLink');
-            const loginLink = document.getElementById('loginLink');
-            const postForm = document.getElementById('postForm');
-            const logoutButton = document.getElementById('logoutButton');
-            const boardPage = document.getElementById('boardPage');
-            const postsDiv = document.getElementById('posts');
-            const boardPageTitle = document.getElementById('boardPageTitle');
+    const loginForm = document.getElementById('loginForm');
+    const signUpForm = document.getElementById('signUpForm');
+    const signUpLink = document.getElementById('signUpLink');
+    const loginLink = document.getElementById('loginLink');
+    const postForm = document.getElementById('postForm');
+    const logoutButton = document.getElementById('logoutButton');
+    const boardPage = document.getElementById('boardPage');
+    const postsDiv = document.getElementById('posts');
+    const boardPageTitle = document.getElementById('boardPageTitle');
 
-            loginForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(async (userCredential) => {
-                        const user = userCredential.user;
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `投稿掲示板: ${userName}`;
-                        document.getElementById('loginPage').style.display = 'none';
-                        document.getElementById('boardPage').style.display = 'block';
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
+    loginForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        signInWithEmailAndPassword(auth, email, password)
+            .then(async (userCredential) => {
+                const user = userCredential.user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('boardPage').style.display = 'block';
+                loadPosts();
+            })
+            .catch((error) => {
+                alert(error.message);
             });
-
-            signUpForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('signUpEmail').value;
-                const password = document.getElementById('signUpPassword').value;
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        return setDoc(doc(db, 'users', user.uid), {
-                            name: name,
-                            email: user.email,
-                            password: password
-                        });
-                    })
-                    .then(() => {
-                        alert('サインアップが成功しました。ログインしてください。');
-                        signUpForm.style.display = 'none';
-                        loginForm.style.display = 'block';
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
-            });
-
-            signUpLink.addEventListener('click', function() {
-                loginForm.style.display = 'none';
-                signUpForm.style.display = 'block';
-            });
-
-            loginLink.addEventListener('click', function() {
-                signUpForm.style.display = 'none';
-                loginForm.style.display = 'block';
-            });
-
-            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-
-            function isImage(file) {
-                return imageMimeTypes.includes(file.type);
-            }
-
-            function isVideo(file) {
-                return videoMimeTypes.includes(file.type);
-            }
-
-            postForm.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const comment = document.getElementById('comment').value;
-    const file = document.getElementById('file').files[0];
-    const user = auth.currentUser;
-    if (comment && user) {
-        try {
-            let fileElement;
-            let downloadURL = '';
-            if (file) {
-                const storageRef = ref(storage, `files/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log('Upload is ' + progress + '% done');
-                    }, 
-                    (error) => {
-                        alert('Upload failed: ' + error.message);
-                    }, 
-                    async () => {
-                        downloadURL = await getDownloadURL(storageRef);
-                        await savePost(user, comment, downloadURL);
-                    }
-                );
-            } else {
-                await savePost(user, comment, downloadURL);
-            }
-        } catch (error) {
-            alert(error.message);
-        }
-    } else {
-        alert('コメントを入力してください');
-    }
-});
-
-async function savePost(user, comment, downloadURL) {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const userName = userDoc.data().name;
-
-    await addDoc(collection(db, 'posts'), {
-        uid: user.uid,
-        username: userName,
-        comment: comment,
-        fileURL: downloadURL,
-        timestamp: serverTimestamp()
     });
 
-    document.getElementById('comment').value = '';
-    document.getElementById('file').value = '';
-    loadPosts();
-}
+            signUpForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('signUpEmail').value;
+        const password = document.getElementById('signUpPassword').value;
+        createUserWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                return setDoc(doc(db, 'users', user.uid), {
+                    name: name,
+                    email: user.email,
+                    password: password
+                });
+            })
+            .then(() => {
+                alert('サインアップが成功しました。ログインしてください。');
+                signUpForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    });
+
+            signUpLink.addEventListener('click', function() {
+        loginForm.style.display = 'none';
+        signUpForm.style.display = 'block';
+    });
+
+    loginLink.addEventListener('click', function() {
+        signUpForm.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
+
+    const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+
+    function isImage(file) {
+        return imageMimeTypes.includes(file.type);
+    }
+
+    function isVideo(file) {
+        return videoMimeTypes.includes(file.type);
+    }
+
+            postForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const comment = document.getElementById('comment').value;
+        const file = document.getElementById('file').files[0];
+        const user = auth.currentUser;
+        if (comment && user) {
+            try {
+                let fileElement;
+                let downloadURL = '';
+                if (file) {
+                    const storageRef = ref(storage, `files/${file.name}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('Upload is ' + progress + '% done');
+                        }, 
+                        (error) => {
+                            alert('Upload failed: ' + error.message);
+                        }, 
+                        async () => {
+                            downloadURL = await getDownloadURL(storageRef);
+                            await savePost(user, comment, downloadURL);
+                        }
+                    );
+                } else {
+                    await savePost(user, comment, downloadURL);
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        } else {
+            alert('コメントを入力してください');
+        }
+    });
+
+async function savePost(user, comment, downloadURL) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userName = userDoc.data().name;
+
+        await addDoc(collection(db, 'posts'), {
+            uid: user.uid,
+            username: userName,
+            comment: comment,
+            fileURL: downloadURL,
+            timestamp: serverTimestamp()
+        });
+
+        document.getElementById('comment').value = '';
+        document.getElementById('file').value = '';
+        loadPosts();
+    }
 
             logoutButton.addEventListener('click', function() {
-                signOut(auth).then(() => {
-                    boardPage.style.display = 'none';
-                    loginPage.style.display = 'block';
-                });
-           });
+        signOut(auth).then(() => {
+            boardPage.style.display = 'none';
+            loginPage.style.display = 'block';
+        });
+    });
 
+    window.onscroll = function() {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            loadMorePosts();
+        }
+    };
+            
             let lastVisiblePost;
 
 async function loadPosts() {
-    const postsDiv = document.getElementById('posts');
-    postsDiv.innerHTML = '';
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
-    const querySnapshot = await getDocs(q);
-    lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+    try {
+        const postsDiv = document.getElementById('posts');
+        postsDiv.innerHTML = '';
+        const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+        const querySnapshot = await getDocs(q);
+        lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-    querySnapshot.forEach((doc) => {
-        displayPost(doc);
-    });
+        querySnapshot.forEach((doc) => {
+            displayPost(doc);
+        });
+        console.log('Posts loaded successfully');
+    } catch (error) {
+        console.error('Error loading posts:', error);
+    }
 }
 
 async function loadMorePosts() {
-    const postsDiv = document.getElementById('posts');
-    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
-    const querySnapshot = await getDocs(q);
-    lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+    try {
+        const postsDiv = document.getElementById('posts');
+        const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+        const querySnapshot = await getDocs(q);
+        lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-    querySnapshot.forEach((doc) => {
-        displayPost(doc);
-    });
+        querySnapshot.forEach((doc) => {
+            displayPost(doc);
+        });
+    } catch (error) {
+        console.error('Error loading more posts:', error);
+    }
 }
 
 function displayPost(doc) {
@@ -317,28 +332,25 @@ function displayPost(doc) {
     postsDiv.appendChild(postDiv);
 }
 
-// Load more posts when scrolling to the bottom
-window.onscroll = function() {
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-        loadMorePosts();
-    }
-};
-
             onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `投稿掲示板: ${userName}`;
-                    boardPage.style.display = 'block';
-                    loginPage.style.display = 'none';
-                    loadPosts();
-                } else {
-                    boardPageTitle.innerText = '';
-                    boardPage.style.display = 'none';
-                    loginPage.style.display = 'block';
-                }
-            });
-        });
+        if (user) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                boardPage.style.display = 'block';
+                loginPage.style.display = 'none';
+                await loadPosts();
+            } catch (error) {
+                console.error('Error getting user document:', error);
+            }
+        } else {
+            boardPageTitle.innerText = '';
+            boardPage.style.display = 'none';
+            loginPage.style.display = 'block';
+        }
+    });
+});
     </script>
 </body>
 </html>
