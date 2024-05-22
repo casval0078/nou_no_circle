@@ -282,6 +282,11 @@ async function savePost(user, comment, downloadURL, fileType) {
     loadPosts();
 }
 
+            // コメントで改行を入れる関数
+function formatComment(comment) {
+    return comment.replace(/\n/g, '<br>');
+}
+            
 // ファイルの表示処理
 function displayPost(doc) {
     const postDiv = document.createElement('div');
@@ -289,7 +294,7 @@ function displayPost(doc) {
     const postData = doc.data();
     const timestamp = postData.timestamp.toDate();
     const dateString = timestamp.toLocaleString();
-    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
+    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
     
     // Display media if available
     if (postData.fileURL && postData.fileType) {
@@ -318,11 +323,30 @@ function displayPost(doc) {
             postDiv.appendChild(fileLink);
         }
     }
+
+    // 投稿者のみが投稿を削除できる機能
+    const currentUser = auth.currentUser;
+    if (currentUser && postData.uid === currentUser.uid) {
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = '削除';
+        deleteButton.addEventListener('click', async () => {
+            if (confirm('この投稿を削除しますか？')) {
+                await deletePost(doc.id);
+            }
+        });
+        postDiv.appendChild(deleteButton);
+    }
+    
     postsDiv.appendChild(postDiv);
 }
 
-
-            async function savePost(user, comment, downloadURL, fileType) {
+// 投稿を削除する関数
+async function deletePost(postId) {
+    await deleteDoc(doc(db, 'posts', postId));
+    loadPosts();
+}
+            
+    async function savePost(user, comment, downloadURL, fileType) {
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userName = userDoc.data().name;
 
