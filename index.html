@@ -71,14 +71,6 @@
         .actions {
             margin-top: 10px;
         }
-
-        .like-icon {
-            color: black;
-        }
-
-        .liked {
-            color: pink;
-        }
     </style>
 </head>
 <body>
@@ -127,13 +119,13 @@
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
-            authDomain: "nou-no-circle.firebaseapp.com",
-            projectId: "nou-no-circle",
-            storageBucket: "nou-no-circle.appspot.com",
-            messagingSenderId: "756338805186",
-            appId: "1:756338805186:web:cb740e035ac611b5baae5b",
-            measurementId: "G-TWBV38P13D"
+            apiKey: "your-api-key",
+            authDomain: "your-auth-domain",
+            projectId: "your-project-id",
+            storageBucket: "your-storage-bucket",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id",
+            measurementId: "your-measurement-id"
         };
 
         const firebaseApp = initializeApp(firebaseConfig);
@@ -315,58 +307,19 @@
             });
 
             // 投稿の表示処理を修正
-function displayPost(doc) {
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-    const postData = doc.data();
-    const timestamp = postData.timestamp.toDate();
-    const dateString = timestamp.toLocaleString();
-    postDiv.innerHTML = `
-        <p><strong>${postData.username}</strong> (${dateString})</p>
-        <p>${postData.comment}</p>
-        <div class="actions">
-            <span class="icon" onclick="commentIconClickHandler('${doc.id}')">&#128172;</span> <!-- 吹き出しアイコン -->
-            <span class="icon like-icon" onclick="likePost('${doc.id}')">&#10084;</span> <!-- ハートアイコン -->
-            <span class="like-count">いいね: ${postData.likes || 0}</span>
-        </div>
-        <div id="comments_${doc.id}" class="comments"></div> <!-- コメント表示領域 -->
-    `;
-    // 投稿に対するコメント入力欄と投稿ボタンを表示
-    displayCommentInput(doc.id);
-
-    // コメントを表示
-    if (commentsMap.has(doc.id)) {
-        displayComments(doc.id, commentsMap.get(doc.id));
-    }
-    // 投稿に返信ボタンを表示
-    const replyButton = document.createElement('button');
-    replyButton.innerText = '返信を表示';
-    replyButton.onclick = function() {
-        displayReplies(doc.id);
-    };
-    postDiv.appendChild(replyButton);
-
-    postsDiv.appendChild(postDiv);
-}
-
-            function displayReplies(postId) {
-                const commentsDiv = document.getElementById(`comments_${postId}`);
-                commentsDiv.innerHTML = '';
-                const replies = repliesMap.get(postId);
-                if (replies && replies.length > 0) {
-                    replies.forEach(reply => {
-                        const replyDiv = document.createElement('div');
-                        replyDiv.className = 'comment';
-                        const timestamp = reply.timestamp.toDate();
-                        const dateString = timestamp.toLocaleString();
-                        replyDiv.innerHTML = `<p><strong>${reply.username}</strong> (${dateString}): ${reply.comment}</p>`;
-                        commentsDiv.appendChild(replyDiv);
-                    });
-                } else {
-                    commentsDiv.innerText = 'まだ返信はありません。';
-                }
+            function displayPost(doc) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                const postData = doc.data();
+                const timestamp = postData.timestamp.toDate();
+                const dateString = timestamp.toLocaleString();
+                postDiv.innerHTML = `
+                    <p><strong>${postData.username}</strong> (${dateString})</p>
+                    <p>${postData.comment}</p>
+                `;
+                postsDiv.appendChild(postDiv);
             }
-            
+
             // Load more posts when scrolling to the bottom
             window.onscroll = function() {
                 if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
@@ -377,191 +330,17 @@ function displayPost(doc) {
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const userName = userDoc.data().name;
+                                        const userName = userDoc.data().name;
                     boardPageTitle.innerText = `投稿掲示板: ${userName}`;
-                    boardPage.style.display = 'block';
-                    loginPage.style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'none';
+                    document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
                 } else {
-                    boardPageTitle.innerText = '';
-                    boardPage.style.display = 'none';
-                    loginPage.style.display = 'block';
+                    document.getElementById('loginPage').style.display = 'block';
+                    document.getElementById('boardPage').style.display = 'none';
                 }
             });
-
-            const commentsMap = new Map(); // 各投稿に紐づくコメントを管理するMap
-
-            // 吹き出しのアイコンをクリックしたときの処理
-function commentIconClickHandler(postId) {
-    const commentInput = document.getElementById(`commentInput_${postId}`);
-    commentInput.style.display = 'block';
-}
-            // 投稿ボタンをクリックしたときの処理
-const postCommentHandler = async (postId) => {
-    const commentInput = document.getElementById(`commentInput_${postId}`);
-    const commentText = document.getElementById(`commentText_${postId}`).value;
-    const user = auth.currentUser;
-    if (commentText && user) {
-        try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const userName = userDoc.data().name;
-            const commentsRef = collection(db, 'comments');
-            await addDoc(commentsRef, {
-                postId: postId,
-                uid: user.uid,
-                username: userName,
-                comment: commentText,
-                timestamp: serverTimestamp()
-            });
-            commentInput.style.display = 'none';
-            document.getElementById(`commentText_${postId}`).value = '';
-            loadPosts(); // コメントを追加した後、投稿を再読み込みして表示更新
-        } catch (error) {
-            console.error('Error adding comment: ', error);
-        }
-    } else {
-        alert('コメントを入力してください');
-    }
-};
-           // 投稿に対してコメントを表示する関数
-            function displayComments(postId, comments) {
-                const commentsDiv = document.getElementById(`comments_${postId}`);
-                if (!commentsDiv) {
-                    console.error(`Element with ID comments_${postId} not found.`);
-                    return;
-                }
-
-                commentsDiv.innerHTML = '';
-                comments.forEach(comment => {
-                    const commentDiv = document.createElement('div');
-                    commentDiv.className = 'comment';
-                    const timestamp = comment.timestamp.toDate();
-                    const dateString = timestamp.toLocaleString();
-                    commentDiv.innerHTML = `<p><strong>${comment.username}</strong> (${dateString}): ${comment.comment}</p>`;
-                    commentsDiv.appendChild(commentDiv);
-                });
-            }
-
-            // 各投稿にコメント入力欄と投稿ボタンを表示する関数
-            function displayCommentInput(postId) {
-                const postElement = document.getElementById(`comments_${postId}`);
-                if (!postElement) {
-                    console.error(`Element with ID comments_${postId} not found.`);
-                    return;
-                }
-
-                const commentInputDiv = document.createElement('div');
-                commentInputDiv.className = 'comment-input';
-                commentInputDiv.id = `commentInput_${postId}`;
-                commentInputDiv.style.display = 'none'; // 初期状態は非表示
-                commentInputDiv.innerHTML = `
-                    <textarea id="commentText_${postId}" placeholder="コメントを入力してください"></textarea>
-                    <button class="comment-button" data-post-id="${postId}">投稿</button>
-                `;
-                postElement.appendChild(commentInputDiv);
-            }
-            
-            // 各投稿にいいね機能を追加する関数
-            async function likePost(postId) {
-                const user = auth.currentUser;
-                if (user) {
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        const likesRef = collection(db, 'likes');
-                        const likeQuery = query(likesRef, where('postId', '==', postId), where('uid', '==', user.uid));
-                        const likeQuerySnapshot = await getDocs(likeQuery);
-                        if (likeQuerySnapshot.empty) {
-                            await addDoc(likesRef, {
-                                postId: postId,
-                                uid: user.uid,
-                                username: userName,
-                                timestamp: serverTimestamp()
-                            });
-                            loadPosts(); // いいねを追加した後、投稿を再読み込みして表示更新
-                        } else {
-                            alert('すでにいいねされています。');
-                        }
-                    } catch (error) {
-                        console.error('Error adding like: ', error);
-                    }
-                } else {
-                    alert('ログインしていないため、いいねを追加できません');
-                }
-            }
-
-            // 各投稿に対して返信する関数
-            async function postReply(postId, replyText) {
-                const user = auth.currentUser;
-                if (user) {
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        const repliesRef = collection(db, 'replies');
-                        await addDoc(repliesRef, {
-                            postId: postId,
-                            uid: user.uid,
-                            username: userName,
-                            comment: replyText,
-                            timestamp: serverTimestamp()
-                        });
-                        loadPosts(); // 返信を追加した後、投稿を再読み込みして表示更新
-                    } catch (error) {
-                        console.error('Error adding reply: ', error);
-                    }
-                } else {
-                    alert('ログインしていないため、返信を投稿できません');
-                }
-            }
-
-            // 吹き出しのアイコンをクリックしたときの処理
-            document.body.addEventListener('click', function(event) {
-                if (event.target.classList.contains('icon')) {
-                    const postId = event.target.getAttribute('data-post-id');
-                    const commentInput = document.getElementById(`commentInput_${postId}`);
-                    if (commentInput) {
-                        commentInput.style.display = 'block';
-                    }
-                }
-            });
-
-            // 各投稿の投稿ボタンをクリックしたときの処理
-            document.body.addEventListener('click', async function(event) {
-                if (event.target.classList.contains('comment-button')) {
-                    const postId = event.target.getAttribute('data-post-id');
-                    const commentInput = document.getElementById(`commentText_${postId}`);
-                    const commentText = commentInput.value;
-                    await postReply(postId, commentText);
-                    commentInput.value = ''; // コメントを投稿した後、入力欄をクリア
-                }
-            });
-            
-            // 投稿に対して返信を投稿する関数
-            async function postReply(postId, replyText) {
-                const user = auth.currentUser;
-                if (user) {
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        const repliesRef = collection(db, 'replies');
-                        await addDoc(repliesRef, {
-                            postId: postId,
-                            uid: user.uid,
-                            username: userName,
-                            comment: replyText,
-                            timestamp: serverTimestamp()
-                        });
-                        loadPosts(); // 返信を追加した後、投稿を再読み込みして表示更新
-                    } catch (error) {
-                        console.error('Error adding reply: ', error);
-                    }
-                } else {
-                    alert('ログインしていないため、返信を投稿できません');
-                }
-            }
         });
     </script>
 </body>
 </html>
-
-
