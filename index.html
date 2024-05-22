@@ -416,6 +416,12 @@ function displayComments(postId, comments) {
 }
  // 各投稿にコメント入力欄と投稿ボタンを表示する関数
 function displayCommentInput(postId) {
+    const postElement = document.getElementById(`post_${postId}`);
+    if (!postElement) {
+        console.error(`Element with ID post_${postId} not found.`);
+        return;
+    }
+
     const commentInputDiv = document.createElement('div');
     commentInputDiv.className = 'comment-input';
     commentInputDiv.id = `commentInput_${postId}`;
@@ -424,7 +430,7 @@ function displayCommentInput(postId) {
         <textarea id="commentText_${postId}" placeholder="コメントを入力してください"></textarea>
         <button onclick="postCommentHandler('${postId}')">投稿</button>
     `;
-    document.getElementById(`post_${postId}`).appendChild(commentInputDiv);
+    postElement.appendChild(commentInputDiv);
 }
             // 投稿にいいね機能を追加する関数
 async function likePost(postId) {
