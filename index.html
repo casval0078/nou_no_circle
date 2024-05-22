@@ -341,7 +341,14 @@
                             await deletePost(doc.id);
                         }
                     });
-                    postDiv.appendChild(deleteText);
+                    const postInfoDiv = document.createElement('div'); // 投稿情報を包む新しい要素
+                    postInfoDiv.className = 'post-info'; // 新しいクラスを追加
+                    postInfoDiv.appendChild(postDate); // 投稿日時を追加
+                    postInfoDiv.appendChild(deleteText); // 削除テキストを追加
+    
+                    postDiv.appendChild(postInfoDiv); // 投稿情報を追加
+                } else {
+                    postDiv.appendChild(postDate); // 投稿日時のみを追加
                 }
                 postsDiv.appendChild(postDiv);
             }
