@@ -176,18 +176,36 @@
                 const password = document.getElementById('password').value;
                 signInWithEmailAndPassword(auth, email, password)
                     .then(async (userCredential) => {
-                        const user = userCredential.user;
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `ログイン名: ${userName}`;
-                        document.getElementById('loginPage').style.display = 'none';
-                        document.getElementById('boardPage').style.display = 'block';
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        alert(error.message);
-                    });
-            });
+                    const user = userCredential.user;
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const userName = userDoc.data().name;
+                    boardPageTitle.innerText = `ログイン名: ${userName}`;
+                    document.getElementById('loginPage').style.display = 'none';
+                    document.getElementById('boardPage').style.display = 'block';
+                    loadPosts();
+                })
+                .catch((error) => {
+                    // ログインに失敗した場合のエラーコードによって適切なメッセージを表示
+                    const errorCode = error.code;
+                    let errorMessage = '';
+                    switch (errorCode) {
+                        case 'auth/user-not-found':
+                            errorMessage = 'ユーザーが見つかりませんでした。';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = 'パスワードが間違っています。';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'メールアドレスの形式が正しくありません。';
+                            break;
+                        default:
+                            errorMessage = 'ログインに失敗しました。';
+                            break;
+                    }
+                    alert(errorMessage);
+                });
+        });
+
 
             signUpForm.addEventListener('submit', function(event) {
                 event.preventDefault();
