@@ -426,6 +426,11 @@ const postCommentHandler = async (postId) => {
            // 各投稿にコメントを表示する関数
 function displayComments(postId, comments) {
     const commentsDiv = document.getElementById(`comments_${postId}`);
+    if (!commentsDiv) {
+        console.error(`Element with ID comments_${postId} not found.`);
+        return;
+    }
+
     commentsDiv.innerHTML = '';
     comments.forEach(comment => {
         const commentDiv = document.createElement('div');
