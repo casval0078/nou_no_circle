@@ -37,9 +37,11 @@
 
         .post img,
         .post video {
-            max-width: 200px; /* 縮小表示 */
+            max-width: 100%; /* 画像や動画の幅を親要素に合わせる */
             height: auto;
             cursor: pointer; /* クリックやタップで全画面表示 */
+            display: block; /* インライン表示からブロック表示に変更 */
+            margin: 10px 0; /* 画像や動画の上下に余白を追加 */
         }
 
         #boardHeader {
@@ -69,6 +71,18 @@
         }
 
         .actions {
+            margin-top: 10px;
+        }
+
+        .like-icon {
+            color: black;
+        }
+
+        .liked {
+            color: pink;
+        }
+
+        .file-link {
             margin-top: 10px;
         }
     </style>
@@ -104,7 +118,7 @@
         <form id="postForm">
             <label for="comment">コメント:</label>
             <textarea id="comment" name="comment" required></textarea>
-            <label for="file">画像添付:</label>
+            <label for="file">ファイル添付:</label>
             <input type="file" id="file" name="file">
             <button type="submit">投稿</button>
         </form>
