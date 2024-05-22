@@ -56,24 +56,6 @@
             width: 100%;
             box-sizing: border-box;
         }
-
-        /* 追加のスタイル */
-        .progress-bar {
-            width: 100%;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .progress {
-            width: 0;
-            height: 20px;
-            background-color: #4caf50;
-            text-align: center;
-            line-height: 20px;
-            color: white;
-        }
     </style>
 </head>
 <body>
@@ -112,12 +94,13 @@
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
+        <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, startAfter, serverTimestamp, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -136,269 +119,258 @@
         const storage = getStorage(firebaseApp);
 
         document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('loginForm');
-    const signUpForm = document.getElementById('signUpForm');
-    const signUpLink = document.getElementById('signUpLink');
-    const loginLink = document.getElementById('loginLink');
-    const postForm = document.getElementById('postForm');
-    const logoutButton = document.getElementById('logoutButton');
-    const boardPage = document.getElementById('boardPage');
-    const postsDiv = document.getElementById('posts');
-    const boardPageTitle = document.getElementById('boardPageTitle');
-    const fileInput = document.getElementById('file');
-    const progressBar = document.getElementById('progressBar');
-    const progress = document.getElementById('progress');
+            const loginForm = document.getElementById('loginForm');
+            const signUpForm = document.getElementById('signUpForm');
+            const signUpLink = document.getElementById('signUpLink');
+            const loginLink = document.getElementById('loginLink');
+            const postForm = document.getElementById('postForm');
+            const logoutButton = document.getElementById('logoutButton');
+            const boardPage = document.getElementById('boardPage');
+            const postsDiv = document.getElementById('posts');
+            const boardPageTitle = document.getElementById('boardPageTitle');
+            const loadMoreButton = document.getElementById('loadMoreButton');
 
-    // ファイルが選択された時の処理
-            fileInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const storageRef = ref(storage, `files/${file.name}`);
-                    const uploadTask = uploadBytesResumable(storageRef, file);
-
-                    // アップロードの進行状況を監視
-                    uploadTask.on('state_changed', 
-                        (snapshot) => {
-                            const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            progress.style.width = `${progressValue}%`;
-                            progress.innerText = `${Math.round(progressValue)}%`;
-                        }, 
-                        (error) => {
-                            alert('アップロードに失敗しました: ' + error.message);
-                        }, 
-                        () => {
-                            // アップロード完了時の処理
-                            getDownloadURL(storageRef).then((downloadURL) => {
-                                // アップロード完了後の処理を記述
-                            });
-                        }
-                    );
-                }
-                });
-
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        signInWithEmailAndPassword(auth, email, password)
-            .then(async (userCredential) => {
-                const user = userCredential.user;
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
-                boardPageTitle.innerText = `投稿掲示板: ${userName}`;
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('boardPage').style.display = 'block';
-                loadPosts();
-            })
-            .catch((error) => {
-                alert(error.message);
-            });
-    });
-
-            signUpForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('signUpEmail').value;
-        const password = document.getElementById('signUpPassword').value;
-        createUserWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                return setDoc(doc(db, 'users', user.uid), {
-                    name: name,
-                    email: user.email,
-                    password: password
-                });
-            })
-            .then(() => {
-                alert('サインアップが成功しました。ログインしてください。');
-                signUpForm.style.display = 'none';
-                loginForm.style.display = 'block';
-            })
-            .catch((error) => {
-                alert(error.message);
-            });
-    });
-
-            signUpLink.addEventListener('click', function() {
-        loginForm.style.display = 'none';
-        signUpForm.style.display = 'block';
-    });
-
-    loginLink.addEventListener('click', function() {
-        signUpForm.style.display = 'none';
-        loginForm.style.display = 'block';
-    });
-
-    const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-
-    function isImage(file) {
-        return imageMimeTypes.includes(file.type);
-    }
-
-    function isVideo(file) {
-        return videoMimeTypes.includes(file.type);
-    }
-
-            postForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const comment = document.getElementById('comment').value;
-        const file = document.getElementById('file').files[0];
-        const user = auth.currentUser;
-        if (comment && user) {
-            try {
-                let fileElement;
-                let downloadURL = '';
-                if (file) {
-                    const storageRef = ref(storage, `files/${file.name}`);
-                    const uploadTask = uploadBytesResumable(storageRef, file);
-
-                    uploadTask.on('state_changed', 
-                        (snapshot) => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            console.log('Upload is ' + progress + '% done');
-                        }, 
-                        (error) => {
-                            alert('Upload failed: ' + error.message);
-                        }, 
-                        async () => {
-                            downloadURL = await getDownloadURL(storageRef);
-                            await savePost(user, comment, downloadURL);
-                        }
-                    );
-                } else {
-                    await savePost(user, comment, downloadURL);
-                }
-            } catch (error) {
-                alert(error.message);
-            }
-        } else {
-            alert('コメントを入力してください');
-        }
-    });
-
-async function savePost(user, comment, downloadURL) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userName = userDoc.data().name;
-
-        await addDoc(collection(db, 'posts'), {
-            uid: user.uid,
-            username: userName,
-            comment: comment,
-            fileURL: downloadURL,
-            timestamp: serverTimestamp()
-        });
-
-        document.getElementById('comment').value = '';
-        document.getElementById('file').value = '';
-        loadPosts();
-    }
-
-            logoutButton.addEventListener('click', function() {
-        signOut(auth).then(() => {
-            boardPage.style.display = 'none';
-            loginPage.style.display = 'block';
-        });
-    });
-
-    window.onscroll = function() {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-            loadMorePosts();
-        }
-    };
-            
             let lastVisiblePost;
 
-async function loadPosts() {
-    try {
-        const postsDiv = document.getElementById('posts');
-        postsDiv.innerHTML = '';
-        const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
-        const querySnapshot = await getDocs(q);
-        lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(async (userCredential) => {
+                        const user = userCredential.user;
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        const userName = userDoc.data().name;
+                        boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                        document.getElementById('loginPage').style.display = 'none';
+                        document.getElementById('boardPage').style.display = 'block';
+                        loadPosts();
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
+            });
 
-        querySnapshot.forEach((doc) => {
-            displayPost(doc);
-        });
-        console.log('Posts loaded successfully');
-    } catch (error) {
-        console.error('Error loading posts:', error);
-    }
-}
+            signUpForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('signUpEmail').value;
+                const password = document.getElementById('signUpPassword').value;
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        return setDoc(doc(db, 'users', user.uid), {
+                            name: name,
+                            email: user.email,
+                            password: password
+                        });
+                    })
+                    .then(() => {
+                        alert('サインアップが成功しました。ログインしてください。');
+                        signUpForm.style.display = 'none';
+                        loginForm.style.display = 'block';
+                    })
+                    .catch((error) => {
+                        alert(error.message);
+                    });
+            });
 
-async function loadMorePosts() {
-    try {
-        const postsDiv = document.getElementById('posts');
-        const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
-        const querySnapshot = await getDocs(q);
-        lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+            signUpLink.addEventListener('click', function() {
+                loginForm.style.display = 'none';
+                signUpForm.style.display = 'block';
+            });
 
-        querySnapshot.forEach((doc) => {
-            displayPost(doc);
-        });
-    } catch (error) {
-        console.error('Error loading more posts:', error);
-    }
-}
+            loginLink.addEventListener('click', function() {
+                signUpForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            });
 
-function displayPost(doc) {
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-    const postData = doc.data();
-    const timestamp = postData.timestamp.toDate();
-    const dateString = timestamp.toLocaleString();
-    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
-    
-    // Display media if available
-    if (postData.fileURL) {
-        const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
-        if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
-            const imgElement = document.createElement('img');
-            imgElement.src = postData.fileURL;
-            imgElement.style.maxWidth = '200px';
-            imgElement.style.height = 'auto';
-            imgElement.style.cursor = 'pointer';
-            imgElement.onclick = function() {
-                window.open(postData.fileURL);
-            };
-            postDiv.appendChild(imgElement);
-        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
-            const videoElement = document.createElement('video');
-            videoElement.src = postData.fileURL;
-            videoElement.style.maxWidth = '200px';
-            videoElement.style.height = 'auto';
-            videoElement.controls = true;
-            postDiv.appendChild(videoElement);
-        } else {
-            const fileLink = document.createElement('a');
-            fileLink.href = postData.fileURL;
-            fileLink.innerText = 'ファイルをダウンロード';
-            fileLink.target = '_blank';
-            postDiv.appendChild(fileLink);
-        }
-    }
-    postsDiv.appendChild(postDiv);
-}
+            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
 
-            onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
+            function isImage(file) {
+                return imageMimeTypes.includes(file.type);
+            }
+
+            function isVideo(file) {
+                return videoMimeTypes.includes(file.type);
+            }
+
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const comment = document.getElementById('comment').value;
+                const file = document.getElementById('file').files[0];
+                const user = auth.currentUser;
+                if (comment && user) {
+                    try {
+                        let fileElement;
+                        let downloadURL = '';
+                        if (file) {
+                            const storageRef = ref(storage, `files/${file.name}`);
+                            const uploadTask = uploadBytesResumable(storageRef, file);
+
+                            uploadTask.on('state_changed', 
+                                (snapshot) => {
+                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                    console.log('Upload is ' + progress + '% done');
+                                    // Display progress UI here
+                                }, 
+                                (error) => {
+                                    alert('Upload failed: ' + error.message);
+                                }, 
+                                async () => {
+                                    downloadURL = await getDownloadURL(storageRef);
+                                    await savePost(user, comment, downloadURL);
+                                }
+                            );
+                        } else {
+                            await savePost(user, comment, downloadURL);
+                        }
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                } else {
+                    alert('コメントを入力してください');
+                }
+            });
+
+            async function savePost(user, comment, downloadURL) {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 const userName = userDoc.data().name;
-                boardPageTitle.innerText = `投稿掲示板: ${userName}`;
-                boardPage.style.display = 'block';
-                loginPage.style.display = 'none';
-                await loadPosts();
-            } catch (error) {
-                console.error('Error getting user document:', error);
+
+                await addDoc(collection(db, 'posts'), {
+                    uid: user.uid,
+                    username: userName,
+                    comment: comment,
+                    fileURL: downloadURL,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('comment').value = '';
+                document.getElementById('file').value = '';
+                loadPosts();
             }
-        } else {
-            boardPageTitle.innerText = '';
-            boardPage.style.display = 'none';
-            loginPage.style.display = 'block';
-        }
-    });
-});
+
+            logoutButton.addEventListener('click', function() {
+                signOut(auth).then(() => {
+                    boardPage.style.display = 'none';
+                    loginPage.style.display = 'block';
+                });
+            });
+
+            async function loadPosts() {
+                postsDiv.innerHTML = '';
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+                const querySnapshot = await getDocs(q);
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc);
+                });
+
+                if (querySnapshot.size < 10) {
+                    loadMoreButton.style.display = 'none';
+                } else {
+                    loadMoreButton.style.display = 'block';
+                }
+            }
+
+            loadMoreButton.addEventListener('click', async () => {
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+                const querySnapshot = await getDocs(q);
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc);
+                });
+
+                if (querySnapshot.size < 10) {
+                    loadMoreButton.style.display = 'none';
+                } else {
+                    loadMoreButton.style.display = 'block';
+                }
+            });
+
+            function displayPost(doc) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                const postData = doc.data();
+                const timestamp = postData.timestamp.toDate();
+                const dateString = timestamp.toLocaleString();
+                postDiv.innerHTML = `
+                    <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
+                    <button class="commentButton">コメント</button>
+                    <button class="likeButton">いいね</button>
+                `;
+                // Display media if available
+                if (postData.fileURL) {
+                    const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
+                    if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = postData.fileURL;
+                        imgElement.style.maxWidth = '200px';
+                        imgElement.style.height = 'auto';
+                        imgElement.style.cursor = 'pointer';
+                        imgElement.onclick = function() {
+                            window.open(postData.fileURL);
+                        };
+                        postDiv.appendChild(imgElement);
+                    } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+                        const videoElement = document.createElement('video');
+                        videoElement.src = postData.fileURL;
+                        videoElement.style.maxWidth = '200px';
+                        videoElement.style.height = 'auto';
+                        videoElement.controls = true;
+                        postDiv.appendChild(videoElement);
+                    } else {
+                        const fileLink = document.createElement('a');
+                        fileLink.href = postData.fileURL;
+                        fileLink.innerText = 'ファイルをダウンロード';
+                        fileLink.target = '_blank';
+                        postDiv.appendChild(fileLink);
+                    }
+                }
+                // Comment functionality
+                const commentButton = postDiv.querySelector('.commentButton');
+                commentButton.addEventListener('click', () => {
+                    // Add your comment functionality here
+                    alert('コメント機能が実装されていません');
+                });
+
+                // Like functionality
+                const likeButton = postDiv.querySelector('.likeButton');
+                likeButton.addEventListener('click', () => {
+                    // Add your like functionality here
+                    alert('いいね機能が実装されていません');
+                });
+
+                postsDiv.appendChild(postDiv);
+            }
+
+            // Load more posts when scrolling to the bottom
+            window.onscroll = function() {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                    loadMoreButton.click();
+                }
+            };
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    const userName = userDoc.data().name;
+                    boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                    boardPage.style.display = 'block';
+                    loginPage.style.display = 'none';
+                    loadPosts();
+                } else {
+                    boardPageTitle.innerText = '';
+                    boardPage.style.display = 'none';
+                    loginPage.style.display = 'block';
+                }
+            });
+        });
     </script>
 </body>
 </html>
+
+
