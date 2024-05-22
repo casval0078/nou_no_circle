@@ -56,6 +56,24 @@
             width: 100%;
             box-sizing: border-box;
         }
+
+        /* 追加のスタイル */
+        .progress-bar {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0;
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -127,6 +145,36 @@
     const boardPage = document.getElementById('boardPage');
     const postsDiv = document.getElementById('posts');
     const boardPageTitle = document.getElementById('boardPageTitle');
+    const fileInput = document.getElementById('file');
+    const progressBar = document.getElementById('progressBar');
+    const progress = document.getElementById('progress');
+
+    // ファイルが選択された時の処理
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const storageRef = ref(storage, `files/${file.name}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    // アップロードの進行状況を監視
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progressValue = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            progress.style.width = `${progressValue}%`;
+                            progress.innerText = `${Math.round(progressValue)}%`;
+                        }, 
+                        (error) => {
+                            alert('アップロードに失敗しました: ' + error.message);
+                        }, 
+                        () => {
+                            // アップロード完了時の処理
+                            getDownloadURL(storageRef).then((downloadURL) => {
+                                // アップロード完了後の処理を記述
+                            });
+                        }
+                    );
+                }
+                });
 
     loginForm.addEventListener('submit', function(event) {
         event.preventDefault();
