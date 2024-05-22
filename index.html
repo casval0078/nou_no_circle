@@ -225,60 +225,120 @@
                 return videoMimeTypes.includes(file.type);
             }
 
-            postForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                const comment = document.getElementById('comment').value;
-                const file = document.getElementById('file').files[0];
-                const user = auth.currentUser;
-                if (comment && user) {
-                    try {
-                        let fileElement;
-                        let downloadURL = '';
-                        if (file) {
-                            const storageRef = ref(storage, `files/${file.name}`);
-                            const uploadTask = uploadBytesResumable(storageRef, file);
+            // ファイルのアップロード処理
+postForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const file = document.getElementById('file').files[0];
+    const user = auth.currentUser;
+    if (comment && user) {
+        try {
+            let fileElement;
+            let downloadURL = '';
+            if (file) {
+                const storageRef = ref(storage, `files/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
-                            uploadTask.on('state_changed', 
-                                (snapshot) => {
-                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                    console.log('Upload is ' + progress + '% done');
-                                    // Display progress UI here
-                                }, 
-                                (error) => {
-                                    alert('Upload failed: ' + error.message);
-                                }, 
-                                async () => {
-                                    downloadURL = await getDownloadURL(storageRef);
-                                    await savePost(user, comment, downloadURL);
-                                }
-                            );
-                        } else {
-                            await savePost(user, comment, downloadURL);
-                        }
-                    } catch (error) {
-                        alert(error.message);
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload is ' + progress + '% done');
+                        // Display progress UI here
+                    }, 
+                    (error) => {
+                        alert('Upload failed: ' + error.message);
+                    }, 
+                    async () => {
+                        downloadURL = await getDownloadURL(storageRef);
+                        await savePost(user, comment, downloadURL, file.type); // ファイルの種類も保存
                     }
-                } else {
-                    alert('コメントを入力してください');
-                }
-            });
-
-            async function savePost(user, comment, downloadURL) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
-
-                await addDoc(collection(db, 'posts'), {
-                    uid: user.uid,
-                    username: userName,
-                    comment: comment,
-                    fileURL: downloadURL,
-                    timestamp: serverTimestamp()
-                });
-
-                document.getElementById('comment').value = '';
-                document.getElementById('file').value = '';
-                loadPosts();
+                );
+            } else {
+                await savePost(user, comment, downloadURL, ''); // ファイルがない場合は空文字列を保存
             }
+        } catch (error) {
+            alert(error.message);
+        }
+    } else {
+        alert('コメントを入力してください');
+    }
+});
+
+async function savePost(user, comment, downloadURL, fileType) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userName = userDoc.data().name;
+
+    await addDoc(collection(db, 'posts'), {
+        uid: user.uid,
+        username: userName,
+        comment: comment,
+        fileURL: downloadURL,
+        fileType: fileType, // ファイルの種類を保存
+        timestamp: serverTimestamp()
+    });
+
+    document.getElementById('comment').value = '';
+    document.getElementById('file').value = '';
+    loadPosts();
+}
+
+// ファイルの表示処理
+function displayPost(doc) {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
+    
+    // Display media if available
+    if (postData.fileURL && postData.fileType) {
+        if (postData.fileType.includes('image')) {
+            const imgElement = document.createElement('img');
+            imgElement.src = postData.fileURL;
+            imgElement.style.maxWidth = '200px';
+            imgElement.style.height = 'auto';
+            imgElement.style.cursor = 'pointer';
+            imgElement.onclick = function() {
+                window.open(postData.fileURL);
+            };
+            postDiv.appendChild(imgElement);
+        } else if (postData.fileType.includes('video')) {
+            const videoElement = document.createElement('video');
+            videoElement.src = postData.fileURL;
+            videoElement.style.maxWidth = '200px';
+            videoElement.style.height = 'auto';
+            videoElement.controls = true;
+            postDiv.appendChild(videoElement);
+        } else {
+            const fileLink = document.createElement('a');
+            fileLink.href = postData.fileURL;
+            fileLink.innerText = 'ファイルをダウンロード';
+            fileLink.target = '_blank';
+            postDiv.appendChild(fileLink);
+        }
+    }
+    postsDiv.appendChild(postDiv);
+}
+
+
+            async function savePost(user, comment, downloadURL, fileType) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userName = userDoc.data().name;
+
+    await addDoc(collection(db, 'posts'), {
+        uid: user.uid,
+        username: userName,
+        comment: comment,
+        fileURL: downloadURL,
+        fileType: fileType, // ファイルの種類を保存
+        timestamp: serverTimestamp()
+    });
+
+    document.getElementById('comment').value = '';
+    document.getElementById('file').value = '';
+    loadPosts();
+}
 
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
@@ -320,8 +380,8 @@
                 }
             });
 
-            // 投稿の表示処理を修正
-            function displayPost(doc) {
+            // ファイルの表示処理
+function displayPost(doc) {
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
     const postData = doc.data();
