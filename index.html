@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>のぅの秘密のお部屋</title>
+    <title>掲示板サイト</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         /* 追加のCSSスタイル */
@@ -89,7 +89,7 @@
 </head>
 <body>
     <div id="loginPage" class="page">
-        <h1>のぅの秘密のお部屋へようこそ</h1>
+        <h1>ログイン</h1>
         <form id="loginForm">
             <label for="email">メールアドレス:</label>
             <input type="email" id="email" name="email" required>
@@ -127,10 +127,10 @@
     </div>
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
@@ -170,7 +170,7 @@
                         const user = userCredential.user;
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `掲示板: ${userName}`;
+                        boardPageTitle.innerText = `投稿掲示板: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
@@ -190,7 +190,8 @@
                         const user = userCredential.user;
                         return setDoc(doc(db, 'users', user.uid), {
                             name: name,
-                            email: user.email
+                            email: user.email,
+                            password: password
                         });
                     })
                     .then(() => {
@@ -213,180 +214,155 @@
                 loginForm.style.display = 'block';
             });
 
-            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+            logoutButton.addEventListener('click', function() {
+                signOut(auth).then(() => {
+                    document.getElementById('loginPage').style.display = 'block';
+                    document.getElementById('boardPage').style.display = 'none';
+                }).catch((error) => {
+                    alert(error.message);
+                });
+            });
 
-            function isImage(file) {
-                return imageMimeTypes.includes(file.type);
-            }
-
-            function isVideo(file) {
-                return videoMimeTypes.includes(file.type);
-            }
-
-            // ファイルのアップロード処理
             postForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const comment = document.getElementById('comment').value;
-                const file = document.getElementById('file').files[0];
-                const user = auth.currentUser;
-                if (comment && user) {
-                    try {
-                        let fileElement;
-                        let downloadURL = '';
-                        if (file) {
-                            const storageRef = ref(storage, `files/${file.name}`);
-                            const uploadTask = uploadBytesResumable(storageRef, file);
+                const fileInput = document.getElementById('file');
+                const file = fileInput.files[0];
+                let fileUrl = "";
+                let fileType = "";
 
-                            uploadTask.on('state_changed', 
-                                (snapshot) => {
-                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                    console.log('Upload is ' + progress + '% done');
-                                    // Display progress UI here
-                                }, 
-                                (error) => {
-                                    alert('Upload failed: ' + error.message);
-                                }, 
-                                async () => {
-                                    downloadURL = await getDownloadURL(storageRef);
-                                    await savePost(user, comment, downloadURL, file.type); // ファイルの種類も保存
-                                }
-                            );
-                        } else {
-                            await savePost(user, comment, downloadURL, ''); // ファイルがない場合は空文字列を保存
+                if (file) {
+                    const storageRef = ref(storage, 'uploads/' + file.name);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            // Progress function
+                        },
+                        (error) => {
+                            console.error('File upload error:', error);
+                        },
+                        () => {
+                            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                                fileUrl = downloadURL;
+                                fileType = file.type;
+                                addPost(comment, fileUrl, fileType);
+                            });
                         }
-                    } catch (error) {
-                        alert(error.message);
-                    }
+                    );
                 } else {
-                    alert('コメントを入力してください');
+                    addPost(comment, fileUrl, fileType);
                 }
             });
 
-            deleteLink.addEventListener('click', async function() {
-    if (confirm('この投稿を削除しますか？')) {
-        await db.collection('posts').doc(doc.id).delete();
-        loadPosts();
-    }
-});
-
-
-            async function savePost(user, comment, downloadURL, fileType) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
-
-                await addDoc(collection(db, 'posts'), {
-                    uid: user.uid,
-                    username: userName,
-                    comment: comment,
-                    fileURL: downloadURL,
-                    fileType: fileType, // ファイルの種類を保存
-                    timestamp: serverTimestamp()
-                });
-
-                document.getElementById('comment').value = '';
-                document.getElementById('file').value = '';
-                loadPosts();
-            }
-
-            // コメントで改行を入れる関数
-            function formatComment(comment) {
-                return comment.replace(/\n/g, '<br>');
-            }
-            
-           function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString})：${postData.uid === auth.currentUser.uid ? '<span class="delete-link">削除</span>' : ''}<br>${formatComment(postData.comment)}</p>`;
-                
-                if (postData.fileURL && postData.fileType) {
-                    if (postData.fileType.includes('image')) {
-                        const imgElement = document.createElement('img');
-                        imgElement.src = postData.fileURL;
-                        imgElement.style.maxWidth = '200px';
-                        imgElement.style.height = 'auto';
-                        imgElement.style.cursor = 'pointer';
-                        imgElement.onclick = function() {
-                            window.open(postData.fileURL);
-                        };
-                        postDiv.appendChild(imgElement);
-                    } else if (postData.fileType.includes('video')) {
-                        const videoElement = document.createElement('video');
-                        videoElement.src = postData.fileURL;
-                        videoElement.style.maxWidth = '200px';
-                        videoElement.style.height = 'auto';
-                        videoElement.controls = true;
-                        postDiv.appendChild(videoElement);
-                    } else {
-                        const fileLink = document.createElement('a');
-                        fileLink.href = postData.fileURL;
-                        fileLink.textContent = 'ファイルを開く';
-                        fileLink.target = '_blank';
-                        postDiv.appendChild(fileLink);
-                    }
-                }
-
-                if (postData.uid === auth.currentUser.uid) {
-                    const deleteLink = postDiv.querySelector('.delete-link');
-                    deleteLink.addEventListener('click', async function() {
-                        if (confirm('この投稿を削除しますか？')) {
-                            await db.collection('posts').doc(doc.id).delete();
-                            loadPosts();
-                        }
+            async function addPost(comment, fileUrl, fileType) {
+                try {
+                    await addDoc(collection(db, 'posts'), {
+                        comment: comment,
+                        timestamp: serverTimestamp(),
+                        fileUrl: fileUrl,
+                        fileType: fileType,
+                        likes: 0,
+                        user: auth.currentUser.uid
                     });
+                    document.getElementById('comment').value = '';
+                    document.getElementById('file').value = '';
+                    loadPosts();
+                } catch (error) {
+                    console.error('Error adding post:', error);
                 }
-
-                postsDiv.appendChild(postDiv);
             }
 
             async function loadPosts() {
                 postsDiv.innerHTML = '';
-                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
-                const querySnapshot = await getDocs(q);
-                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                let q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
 
-                querySnapshot.forEach((doc) => {
+                const postSnapshots = await getDocs(q);
+                lastVisiblePost = postSnapshots.docs[postSnapshots.docs.length - 1];
+
+                postSnapshots.forEach((doc) => {
                     displayPost(doc);
                 });
 
-                if (querySnapshot.size < 10) {
-                    loadMoreButton.style.display = 'none';
-                } else {
+                if (postSnapshots.size === 10) {
                     loadMoreButton.style.display = 'block';
+                } else {
+                    loadMoreButton.style.display = 'none';
                 }
             }
 
-            loadMoreButton.addEventListener('click', async () => {
-                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
-                const querySnapshot = await getDocs(q);
-                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+            loadMoreButton.addEventListener('click', async function() {
+                let q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
 
-                querySnapshot.forEach((doc) => {
+                const postSnapshots = await getDocs(q);
+                lastVisiblePost = postSnapshots.docs[postSnapshots.docs.length - 1];
+
+                postSnapshots.forEach((doc) => {
                     displayPost(doc);
                 });
 
-                if (querySnapshot.size < 10) {
+                if (postSnapshots.size < 10) {
                     loadMoreButton.style.display = 'none';
-                } else {
-                    loadMoreButton.style.display = 'block';
                 }
             });
 
-            // Load more posts when scrolling to the bottom
-            window.onscroll = function() {
-                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                    loadMoreButton.click();
-                }
-            };
+            function displayPost(doc) {
+                const post = doc.data();
+                const postDiv = document.createElement('div');
+                postDiv.classList.add('post');
 
-            onAuthStateChanged(auth, async (user) => {
+                const deleteLink = document.createElement('span');
+                deleteLink.textContent = '削除';
+                deleteLink.style.cursor = 'pointer';
+                deleteLink.style.marginLeft = '10px';
+
+                const postHeader = document.createElement('div');
+                postHeader.textContent = `名前: ${post.user} 投稿日時: ${post.timestamp.toDate().toLocaleString()}：`;
+                postHeader.appendChild(deleteLink);
+
+                postDiv.appendChild(postHeader);
+
+                const postComment = document.createElement('p');
+                postComment.textContent = post.comment;
+                postDiv.appendChild(postComment);
+
+                if (post.fileUrl) {
+                    if (post.fileType.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = post.fileUrl;
+                        img.classList.add('file-link');
+                        postDiv.appendChild(img);
+                    } else if (post.fileType.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.src = post.fileUrl;
+                        video.controls = true;
+                        video.classList.add('file-link');
+                        postDiv.appendChild(video);
+                    } else {
+                        const fileLink = document.createElement('a');
+                        fileLink.href = post.fileUrl;
+                        fileLink.textContent = '添付ファイル';
+                        fileLink.classList.add('file-link');
+                        postDiv.appendChild(fileLink);
+                    }
+                }
+
+                deleteLink.addEventListener('click', async function() {
+                    if (confirm('この投稿を削除しますか？')) {
+                        try {
+                            await deleteDoc(doc.ref);
+                            loadPosts();
+                        } catch (error) {
+                            console.error('Error deleting post:', error);
+                        }
+                    }
+                });
+
+                postsDiv.appendChild(postDiv);
+            }
+
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `投稿掲示板: ${userName}`;
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
@@ -399,4 +375,3 @@
     </script>
 </body>
 </html>
-
