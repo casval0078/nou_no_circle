@@ -486,28 +486,28 @@ function displayComments(postId, comments) {
             // 各投稿に対して返信する関数
             const replyMap = new Map(); // 各投稿に対する返信を管理するMap
 
-            function replyToPost(postId, replyText) {
-                const user = auth.currentUser;
-                if (user) {
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-                        const repliesRef = collection(db, 'replies');
-                        await addDoc(repliesRef, {
-                            postId: postId,
-                            uid: user.uid,
-                            username: userName,
-                            comment: replyText,
-                            timestamp: serverTimestamp()
-                        });
-                        loadPosts(); // 返信を追加した後、投稿を再読み込みして表示更新
-                    } catch (error) {
-                        console.error('Error adding reply: ', error);
-                    }
-                } else {
-                    alert('ログインしていないため、返信を追加できません');
-                }
-            }
+            async function replyToPost(postId, replyText) {
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userName = userDoc.data().name;
+            const repliesRef = collection(db, 'replies');
+            await addDoc(repliesRef, {
+                postId: postId,
+                uid: user.uid,
+                username: userName,
+                comment: replyText,
+                timestamp: serverTimestamp()
+            });
+            loadPosts(); // 返信を追加した後、投稿を再読み込みして表示更新
+        } catch (error) {
+            console.error('Error adding reply: ', error);
+        }
+    } else {
+        alert('ログインしていないため、返信を追加できません');
+    }
+}
             // 投稿に対して返信を投稿する関数
             async function postReply(postId, replyText) {
                 const user = auth.currentUser;
