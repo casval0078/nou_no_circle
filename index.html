@@ -86,7 +86,8 @@
             margin-top: 10px;
         }
         /* 追加のCSSスタイル */
-        #logoutButton {
+        #logoutButton,
+        #postForm button[type="submit"] {
             width: 100px; /* 例として固定の幅を100pxに指定 */
         }
     </style>
@@ -330,16 +331,17 @@
                 // 投稿者のみが投稿を削除できる機能
                 const currentUser = auth.currentUser;
                 if (currentUser && postData.uid === currentUser.uid) {
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerText = '削除';
-                    deleteButton.addEventListener('click', async () => {
+                    const deleteText = document.createElement('span');
+                    deleteText.innerText = '削除';
+                    deleteText.style.cursor = 'pointer';
+                    deleteText.style.color = 'blue';
+                    deleteText.addEventListener('click', async () => {
                         if (confirm('この投稿を削除しますか？')) {
                             await deletePost(doc.id);
                         }
                     });
-                    postDiv.appendChild(deleteButton);
+                    postDiv.appendChild(deleteText);
                 }
-
                 postsDiv.appendChild(postDiv);
             }
 
@@ -400,7 +402,7 @@
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                    boardPageTitle.innerText = `掲示板: ${userName}`;
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
