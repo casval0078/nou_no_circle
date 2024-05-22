@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>掲示板サイト</title>
+    <title>のぅの秘密のお部屋</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         /* 追加のCSSスタイル */
@@ -89,7 +89,7 @@
 </head>
 <body>
     <div id="loginPage" class="page">
-        <h1>ログイン</h1>
+        <h1>のぅの秘密のお部屋へようこそ</h1>
         <form id="loginForm">
             <label for="email">メールアドレス:</label>
             <input type="email" id="email" name="email" required>
@@ -170,7 +170,7 @@
                         const user = userCredential.user;
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                        boardPageTitle.innerText = `掲示板: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
