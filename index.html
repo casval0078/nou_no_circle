@@ -159,7 +159,7 @@
             const loginLink = document.getElementById('loginLink');
             const postForm = document.getElementById('postForm');
             const logoutButton = document.getElementById('logoutButton');
-                        const boardPage = document.getElementById('boardPage');
+            const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
             const boardPageTitle = document.getElementById('boardPageTitle');
             const loadMoreButton = document.getElementById('loadMoreButton');
@@ -195,7 +195,8 @@
                         const user = userCredential.user;
                         return setDoc(doc(db, 'users', user.uid), {
                             name: name,
-                            email: user.email
+                            email: user.email,
+                            password: password
                         });
                     })
                     .then(() => {
