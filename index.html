@@ -286,16 +286,14 @@
                 return comment.replace(/\n/g, '<br>');
             }
             
-            // 投稿を表示する関数
             function displayPost(doc) {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
                 const postData = doc.data();
                 const timestamp = postData.timestamp.toDate();
                 const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
+                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString})<span class="delete-link">削除</span>:<br>${formatComment(postData.comment)}</p>`;
                 
-                // Display media if available
                 if (postData.fileURL && postData.fileType) {
                     if (postData.fileType.includes('image')) {
                         const imgElement = document.createElement('img');
@@ -317,12 +315,12 @@
                     } else {
                         const fileLink = document.createElement('a');
                         fileLink.href = postData.fileURL;
-                        fileLink.innerText = 'ファイルをダウンロード';
+                        fileLink.innerText = 'ファイルを開く';
                         fileLink.target = '_blank';
                         postDiv.appendChild(fileLink);
                     }
                 }
-                
+           
                 // 投稿者のみが投稿を削除できる機能
                 const currentUser = auth.currentUser;
                 if (currentUser && postData.uid === currentUser.uid) {
