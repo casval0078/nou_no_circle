@@ -330,9 +330,8 @@
     postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
     
     // Display media if available
-    if (postData.fileURL) {
-        const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
-        if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
+    if (postData.fileURL && postData.fileType) {
+        if (postData.fileType.includes('image')) {
             const imgElement = document.createElement('img');
             imgElement.src = postData.fileURL;
             imgElement.style.maxWidth = '200px';
@@ -342,7 +341,7 @@
                 window.open(postData.fileURL);
             };
             postDiv.appendChild(imgElement);
-        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+        } else if (postData.fileType.includes('video')) {
             const videoElement = document.createElement('video');
             videoElement.src = postData.fileURL;
             videoElement.style.maxWidth = '200px';
@@ -359,7 +358,6 @@
     }
     postsDiv.appendChild(postDiv);
 }
-
 
             // Load more posts when scrolling to the bottom
             window.onscroll = function() {
