@@ -193,71 +193,58 @@
             }
 
             postForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                const comment = document.getElementById('comment').value;
-                const file = document.getElementById('file').files[0];
-                const user = auth.currentUser;
-                if (comment && user) {
-                    try {
-                        let fileElement;
-                        let downloadURL = '';
-                        if (file) {
-                            if (isImage(file)) {
-                                fileElement = document.createElement('img');
-                                fileElement.src = URL.createObjectURL(file);
-                                fileElement.style.maxWidth = '200px';
-                                fileElement.style.height = 'auto';
-                                fileElement.style.cursor = 'pointer';
-                                fileElement.onclick = function() {
-                                    window.open(URL.createObjectURL(file));
-                                };
-                            } else if (isVideo(file)) {
-                                fileElement = document.createElement('video');
-                                fileElement.src = URL.createObjectURL(file);
-                                fileElement.style.maxWidth = '200px';
-                                fileElement.style.height = 'auto';
-                                fileElement.controls = true;
-                            } else {
-                                const fileLink = document.createElement('a');
-                                fileLink.href = URL.createObjectURL(file);
-                                fileLink.innerText = 'ファイルをダウンロード';
-                                fileLink.target = '_blank';
-                                fileElement = fileLink;
-                            }
+    event.preventDefault();
+    const comment = document.getElementById('comment').value;
+    const file = document.getElementById('file').files[0];
+    const user = auth.currentUser;
+    if (comment && user) {
+        try {
+            let fileElement;
+            let downloadURL = '';
+            if (file) {
+                const storageRef = ref(storage, `files/${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
-                            const storageRef = ref(storage, `files/${file.name}`);
-                            const uploadTask = uploadBytesResumable(storageRef, file);
-                            await uploadTask;
-
-                            downloadURL = await getDownloadURL(storageRef);
-                        }
-
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        const userName = userDoc.data().name;
-
-                        await addDoc(collection(db, 'posts'), {
-                            uid: user.uid,
-                            username: userName,
-                            comment: comment,
-                            fileURL: downloadURL,
-                            timestamp: serverTimestamp()
-                        });
-
-                        document.getElementById('comment').value = '';
-                        document.getElementById('file').value = '';
-
-                        loadPosts();
-
-                        if (fileElement) {
-                            postsDiv.appendChild(fileElement);
-                        }
-                    } catch (error) {
-                        alert(error.message);
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload is ' + progress + '% done');
+                    }, 
+                    (error) => {
+                        alert('Upload failed: ' + error.message);
+                    }, 
+                    async () => {
+                        downloadURL = await getDownloadURL(storageRef);
+                        await savePost(user, comment, downloadURL);
                     }
-                } else {
-                    alert('コメントを入力してください');
-                }
-            });
+                );
+            } else {
+                await savePost(user, comment, downloadURL);
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    } else {
+        alert('コメントを入力してください');
+    }
+});
+
+async function savePost(user, comment, downloadURL) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userName = userDoc.data().name;
+
+    await addDoc(collection(db, 'posts'), {
+        uid: user.uid,
+        username: userName,
+        comment: comment,
+        fileURL: downloadURL,
+        timestamp: serverTimestamp()
+    });
+
+    document.getElementById('comment').value = '';
+    document.getElementById('file').value = '';
+    loadPosts();
+}
 
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
@@ -266,50 +253,76 @@
                 });
            });
 
-            async function loadPosts() {
-                const postsDiv = document.getElementById('posts');
-                postsDiv.innerHTML = '';
-                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
-                const querySnapshot = await getDocs(q);
-                querySnapshot.forEach((doc) => {
-                    const postDiv = document.createElement('div');
-                    postDiv.className = 'post';
-                    const postData = doc.data();
-                    const timestamp = postData.timestamp.toDate();
-                    const dateString = timestamp.toLocaleString();
-                    postDiv.innerHTML = `
-                        <p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>
-                    `;
-                    if (postData.fileURL) {
-                        const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
-                        if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
-                            const imgElement = document.createElement('img');
-                            imgElement.src = postData.fileURL;
-                            imgElement.style.maxWidth = '200px';
-                            imgElement.style.height = 'auto';
-                            imgElement.style.cursor = 'pointer';
-                            imgElement.onclick = function() {
-                                window.open(postData.fileURL);
-                            };
-                            postDiv.appendChild(imgElement);
-                        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
-                            const videoElement = document.createElement('video');
-                            videoElement.src = postData.fileURL;
-                            videoElement.style.maxWidth = '200px';
-                            videoElement.style.height = 'auto';
-                            videoElement.controls = true;
-                            postDiv.appendChild(videoElement);
-                        } else {
-                            const fileLink = document.createElement('a');
-                            fileLink.href = postData.fileURL;
-                            fileLink.innerText = 'ファイルをダウンロード';
-                            fileLink.target = '_blank';
-                            postDiv.appendChild(fileLink);
-                        }
-                    }
-                    postsDiv.appendChild(postDiv);
-                });
-            }
+            let lastVisiblePost;
+
+async function loadPosts() {
+    const postsDiv = document.getElementById('posts');
+    postsDiv.innerHTML = '';
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+    const querySnapshot = await getDocs(q);
+    lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+    querySnapshot.forEach((doc) => {
+        displayPost(doc);
+    });
+}
+
+async function loadMorePosts() {
+    const postsDiv = document.getElementById('posts');
+    const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+    const querySnapshot = await getDocs(q);
+    lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+    querySnapshot.forEach((doc) => {
+        displayPost(doc);
+    });
+}
+
+function displayPost(doc) {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${postData.comment}</p>`;
+    
+    // Display media if available
+    if (postData.fileURL) {
+        const fileExtension = postData.fileURL.split('.').pop().toLowerCase();
+        if (['jpeg', 'jpg', 'gif', 'png'].includes(fileExtension)) {
+            const imgElement = document.createElement('img');
+            imgElement.src = postData.fileURL;
+            imgElement.style.maxWidth = '200px';
+            imgElement.style.height = 'auto';
+            imgElement.style.cursor = 'pointer';
+            imgElement.onclick = function() {
+                window.open(postData.fileURL);
+            };
+            postDiv.appendChild(imgElement);
+        } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+            const videoElement = document.createElement('video');
+            videoElement.src = postData.fileURL;
+            videoElement.style.maxWidth = '200px';
+            videoElement.style.height = 'auto';
+            videoElement.controls = true;
+            postDiv.appendChild(videoElement);
+        } else {
+            const fileLink = document.createElement('a');
+            fileLink.href = postData.fileURL;
+            fileLink.innerText = 'ファイルをダウンロード';
+            fileLink.target = '_blank';
+            postDiv.appendChild(fileLink);
+        }
+    }
+    postsDiv.appendChild(postDiv);
+}
+
+// Load more posts when scrolling to the bottom
+window.onscroll = function() {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        loadMorePosts();
+    }
+};
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
