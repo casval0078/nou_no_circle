@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>掲示板サイト</title>
+    <title>のぅの秘密のお部屋</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         /* 追加のCSSスタイル */
@@ -89,7 +89,7 @@
 </head>
 <body>
     <div id="loginPage" class="page">
-        <h1>ログイン</h1>
+        <h1>のぅの秘密のお部屋へようこそ</h1>
         <form id="loginForm">
             <label for="email">メールアドレス:</label>
             <input type="email" id="email" name="email" required>
@@ -154,7 +154,7 @@
             const loginLink = document.getElementById('loginLink');
             const postForm = document.getElementById('postForm');
             const logoutButton = document.getElementById('logoutButton');
-                        const boardPage = document.getElementById('boardPage');
+            const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
             const boardPageTitle = document.getElementById('boardPageTitle');
             const loadMoreButton = document.getElementById('loadMoreButton');
@@ -170,7 +170,7 @@
                         const user = userCredential.user;
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `投稿掲示板: ${userName}`;
+                        boardPageTitle.innerText = `掲示板: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
@@ -286,13 +286,13 @@
                 return comment.replace(/\n/g, '<br>');
             }
             
-            function displayPost(doc) {
+           function displayPost(doc) {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
                 const postData = doc.data();
                 const timestamp = postData.timestamp.toDate();
                 const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString})<span class="delete-link">削除</span>:<br>${formatComment(postData.comment)}</p>`;
+                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString})：${postData.uid === auth.currentUser.uid ? '<span class="delete-link">削除</span>' : ''}<br>${formatComment(postData.comment)}</p>`;
                 
                 if (postData.fileURL && postData.fileType) {
                     if (postData.fileType.includes('image')) {
@@ -315,40 +315,24 @@
                     } else {
                         const fileLink = document.createElement('a');
                         fileLink.href = postData.fileURL;
-                        fileLink.innerText = 'ファイルを開く';
+                        fileLink.textContent = 'ファイルを開く';
                         fileLink.target = '_blank';
                         postDiv.appendChild(fileLink);
                     }
                 }
-           
-                // 投稿者のみが投稿を削除できる機能
-                const currentUser = auth.currentUser;
-                if (currentUser && postData.uid === currentUser.uid) {
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerText = '削除';
-                    deleteButton.addEventListener('click', async () => {
+
+                if (postData.uid === auth.currentUser.uid) {
+                    const deleteLink = postDiv.querySelector('.delete-link');
+                    deleteLink.addEventListener('click', async function() {
                         if (confirm('この投稿を削除しますか？')) {
-                            await deletePost(doc.id);
+                            await db.collection('posts').doc(doc.id).delete();
+                            loadPosts();
                         }
                     });
-                    postDiv.appendChild(deleteButton);
                 }
 
                 postsDiv.appendChild(postDiv);
             }
-
-            // 投稿を削除する関数
-            async function deletePost(postId) {
-                await deleteDoc(doc(db, 'posts', postId));
-                loadPosts();
-            }
-            
-            logoutButton.addEventListener('click', function() {
-                signOut(auth).then(() => {
-                    boardPage.style.display = 'none';
-                    document.getElementById('loginPage').style.display = 'block';
-                });
-            });
 
             async function loadPosts() {
                 postsDiv.innerHTML = '';
