@@ -370,10 +370,10 @@ function displayPost(doc) {
             const commentsMap = new Map(); // 各投稿に紐づくコメントを管理するMap
 
             // 吹き出しのアイコンをクリックしたときの処理
-const commentIconClickHandler = (postId) => {
+function commentIconClickHandler(postId) {
     const commentInput = document.getElementById(`commentInput_${postId}`);
     commentInput.style.display = 'block';
-};
+}
             // 投稿ボタンをクリックしたときの処理
 const postCommentHandler = async (postId) => {
     const commentInput = document.getElementById(`commentInput_${postId}`);
