@@ -100,7 +100,7 @@
             <input type="email" id="email" name="email" required>
             <label for="password">パスワード:</label>
             <input type="password" id="password" name="password" required>
-            <button type="submit">ログイン</button>
+            <button type="submit" style="width: 100px;">ログイン</button>
             <p>アカウントをお持ちでないですか？ <a href="#" id="signUpLink">サインアップ</a></p>
         </form>
         <form id="signUpForm" style="display:none;">
@@ -110,7 +110,7 @@
             <input type="email" id="signUpEmail" name="signUpEmail" required>
             <label for="signUpPassword">パスワード:</label>
             <input type="password" id="signUpPassword" name="signUpPassword" required>
-            <button type="submit">サインアップ</button>
+            <button type="submit" style="width: 100px;">サインアップ</button>
             <p>すでにアカウントをお持ちですか？ <a href="#" id="loginLink">ログイン</a></p>
         </form>
     </div>
@@ -341,14 +341,7 @@
                             await deletePost(doc.id);
                         }
                     });
-                    const postInfoDiv = document.createElement('div'); // 投稿情報を包む新しい要素
-                    postInfoDiv.className = 'post-info'; // 新しいクラスを追加
-                    postInfoDiv.appendChild(postDate); // 投稿日時を追加
-                    postInfoDiv.appendChild(deleteText); // 削除テキストを追加
-    
-                    postDiv.appendChild(postInfoDiv); // 投稿情報を追加
-                } else {
-                    postDiv.appendChild(postDate); // 投稿日時のみを追加
+                    postDiv.appendChild(deleteText);
                 }
                 postsDiv.appendChild(postDiv);
             }
