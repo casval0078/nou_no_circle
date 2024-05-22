@@ -179,7 +179,7 @@
                         const user = userCredential.user;
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         const userName = userDoc.data().name;
-                        boardPageTitle.innerText = `掲示板: ${userName}`;
+                        boardPageTitle.innerText = `ログイン名: ${userName}`;
                         document.getElementById('loginPage').style.display = 'none';
                         document.getElementById('boardPage').style.display = 'block';
                         loadPosts();
@@ -407,7 +407,7 @@
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `掲示板: ${userName}`;
+                    boardPageTitle.innerText = `ログイン名: ${userName}`;
                     document.getElementById('loginPage').style.display = 'none';
                     document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
