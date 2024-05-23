@@ -229,23 +229,22 @@
                         name: name,
                         email: email
                     });
-                    boardPageTitle.innerText = `ログイン名: ${name}`;
-                    document.getElementById('signUpForm').style.display = 'none';
-                    document.getElementById('boardPage').style.display = 'block';
-                    loadPosts();
+                    alert('サインアップが完了しました。ログインしてください。');
+                    signUpForm.style.display = 'none';
+                    loginForm.style.display = 'block';
                 })
                 .catch((error) => {
                     const errorCode = error.code;
                     let errorMessage = '';
                     switch (errorCode) {
                         case 'auth/email-already-in-use':
-                            errorMessage = 'このメールアドレスはすでに使用されています。';
+                            errorMessage = 'このメールアドレスは既に使用されています。';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'パスワードが短すぎます。';
                             break;
                         case 'auth/invalid-email':
                             errorMessage = '無効なメールアドレスです。';
-                            break;
-                        case 'auth/weak-password':
-                            errorMessage = 'パスワードが弱すぎます。';
                             break;
                         default:
                             errorMessage = 'サインアップ中にエラーが発生しました。';
@@ -266,56 +265,6 @@
                 loginForm.style.display = 'block';
             });
 
-            postForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                const comment = document.getElementById('comment').value;
-                const fileInput = document.getElementById('file');
-                const file = fileInput.files[0];
-                let fileUrl = null;
-                let fileType = null;
-
-                if (file) {
-                    const storageRef = ref(storage, 'uploads/' + file.name);
-                    const uploadTask = uploadBytesResumable(storageRef, file);
-
-                    await new Promise((resolve, reject) => {
-                        uploadTask.on('state_changed', 
-                            (snapshot) => {},
-                            (error) => {
-                                reject(error);
-                            }, 
-                            async () => {
-                                fileUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                                fileType = file.type;
-                                resolve();
-                            }
-                        );
-                    });
-                }
-
-                const user = auth.currentUser;
-                const postRef = await addDoc(collection(db, 'posts'), {
-                    comment: comment,
-                    timestamp: serverTimestamp(),
-                    userId: user.uid,
-                    fileUrl: fileUrl,
-                    fileType: fileType
-                });
-
-                document.getElementById('comment').value = '';
-                document.getElementById('file').value = '';
-
-                renderPost({
-                    id: postRef.id,
-                    comment: comment,
-                    userId: user.uid,
-                    fileUrl: fileUrl,
-                    fileType: fileType,
-                    likes: 0,
-                    userLikes: false
-                });
-            });
-
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
                     document.getElementById('boardPage').style.display = 'none';
@@ -325,147 +274,72 @@
                 });
             });
 
-            function renderPost(postData) {
-                const postElement = document.createElement('div');
-                postElement.classList.add('post');
-                postElement.setAttribute('data-post-id', postData.id);
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const comment = document.getElementById('comment').value;
+                const fileInput = document.getElementById('file');
+                const user = auth.currentUser;
+                let fileURL = '';
 
-                const commentElement = document.createElement('p');
-                commentElement.textContent = postData.comment;
-                postElement.appendChild(commentElement);
-
-                if (postData.fileUrl) {
-                    let fileElement;
-                    if (postData.fileType.startsWith('image/')) {
-                        fileElement = document.createElement('img');
-                        fileElement.src = postData.fileUrl;
-                    } else if (postData.fileType.startsWith('video/')) {
-                        fileElement = document.createElement('video');
-                        fileElement.src = postData.fileUrl;
-                        fileElement.controls = true;
-                    } else {
-                        const linkElement = document.createElement('a');
-                        linkElement.href = postData.fileUrl;
-                        linkElement.textContent = '添付ファイル';
-                        fileElement = linkElement;
-                    }
-                    postElement.appendChild(fileElement);
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `uploads/${user.uid}/${file.name}`);
+                    const uploadTask = await uploadBytesResumable(storageRef, file);
+                    fileURL = await getDownloadURL(uploadTask.ref);
                 }
 
-                const replyButton = document.createElement('button');
-                replyButton.textContent = '返信';
-                replyButton.classList.add('reply-button');
-                replyButton.addEventListener('click', () => {
-                    const replyForm = document.createElement('div');
-                    replyForm.classList.add('reply-form');
-                    replyForm.innerHTML = `
-                        <textarea rows="2" placeholder="返信を入力..."></textarea>
-                        <button type="button">送信</button>
-                    `;
-                    const replyTextarea = replyForm.querySelector('textarea');
-                    const replyButton = replyForm.querySelector('button');
-                    replyButton.addEventListener('click', async () => {
-                        const replyText = replyTextarea.value;
-                        if (replyText) {
-                            const commentRef = collection(db, 'posts', postData.id, 'comments');
-                            await addDoc(commentRef, {
-                                comment: replyText,
-                                timestamp: serverTimestamp(),
-                                userId: auth.currentUser.uid
-                            });
-                            replyTextarea.value = '';
-                            renderComment(postElement, {
-                                comment: replyText,
-                                userId: auth.currentUser.uid
-                            });
-                        }
+                try {
+                    await addDoc(collection(db, 'posts'), {
+                        userId: user.uid,
+                        userName: user.email,
+                        comment: comment,
+                        fileURL: fileURL,
+                        timestamp: serverTimestamp()
                     });
-                    postElement.appendChild(replyForm);
-                });
-                postElement.appendChild(replyButton);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '削除';
-                deleteButton.addEventListener('click', async () => {
-                    if (confirm('この投稿を削除しますか？')) {
-                        await deleteDoc(doc(db, 'posts', postData.id));
-                        postElement.remove();
-                    }
-                });
-                postElement.appendChild(deleteButton);
-
-                const likeButton = document.createElement('button');
-                const likeIcon = document.createElement('span');
-                likeIcon.classList.add('like-icon');
-                likeIcon.textContent = '❤';
-                if (postData.userLikes) {
-                    likeIcon.classList.add('liked');
+                    document.getElementById('comment').value = '';
+                    fileInput.value = '';
+                    loadPosts();
+                } catch (error) {
+                    alert('投稿中にエラーが発生しました。');
                 }
-                const likeCount = document.createElement('span');
-                likeCount.textContent = postData.likes;
-                likeButton.appendChild(likeIcon);
-                likeButton.appendChild(likeCount);
-                likeButton.addEventListener('click', async () => {
-                    const user = auth.currentUser;
-                    const userLikeRef = doc(db, 'posts', postData.id, 'likes', user.uid);
-                    if (postData.userLikes) {
-                        await deleteDoc(userLikeRef);
-                        likeIcon.classList.remove('liked');
-                        likeCount.textContent = parseInt(likeCount.textContent) - 1;
-                    } else {
-                        await setDoc(userLikeRef, {
-                            userId: user.uid
-                        });
-                        likeIcon.classList.add('liked');
-                        likeCount.textContent = parseInt(likeCount.textContent) + 1;
-                    }
-                    postData.userLikes = !postData.userLikes;
-                });
-                postElement.appendChild(likeButton);
-
-                postsDiv.appendChild(postElement);
-
-                loadComments(postData.id, postElement);
-            }
-
-            function renderComment(postElement, commentData) {
-                const commentElement = document.createElement('div');
-                commentElement.classList.add('comment');
-                commentElement.textContent = commentData.comment;
-                postElement.appendChild(commentElement);
-            }
-
-            async function loadComments(postId, postElement) {
-                const commentsQuery = query(collection(db, 'posts', postId, 'comments'), orderBy('timestamp', 'asc'));
-                const commentsSnapshot = await getDocs(commentsQuery);
-                commentsSnapshot.forEach((commentDoc) => {
-                    renderComment(postElement, commentDoc.data());
-                });
-            }
+            });
 
             async function loadPosts() {
-                let postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
-                if (lastVisiblePost) {
-                    postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
-                }
-                const postsSnapshot = await getDocs(postsQuery);
-                lastVisiblePost = postsSnapshot.docs[postsSnapshot.docs.length - 1];
-                postsSnapshot.forEach((postDoc) => {
-                    renderPost({
-                        id: postDoc.id,
-                        ...postDoc.data(),
-                        userLikes: false
-                    });
+                postsDiv.innerHTML = '';
+                const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+                const querySnapshot = await getDocs(postsQuery);
+                querySnapshot.forEach((doc) => {
+                    const post = doc.data();
+                    const postDiv = document.createElement('div');
+                    postDiv.classList.add('post');
+                    postDiv.innerHTML = `
+                        <p>${post.userName}:</p>
+                        <p>${post.comment}</p>
+                        ${post.fileURL ? `<img src="${post.fileURL}" alt="Attachment">` : ''}
+                    `;
+                    postsDiv.appendChild(postDiv);
                 });
-
-                if (postsSnapshot.size === 10) {
-                    loadMoreButton.style.display = 'block';
-                } else {
-                    loadMoreButton.style.display = 'none';
-                }
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
             }
 
-            loadMoreButton.addEventListener('click', loadPosts);
+            loadMoreButton.addEventListener('click', async function() {
+                if (lastVisiblePost) {
+                    const nextPostsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+                    const querySnapshot = await getDocs(nextPostsQuery);
+                    querySnapshot.forEach((doc) => {
+                        const post = doc.data();
+                        const postDiv = document.createElement('div');
+                        postDiv.classList.add('post');
+                        postDiv.innerHTML = `
+                            <p>${post.userName}:</p>
+                            <p>${post.comment}</p>
+                            ${post.fileURL ? `<img src="${post.fileURL}" alt="Attachment">` : ''}
+                        `;
+                        postsDiv.appendChild(postDiv);
+                    });
+                    lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                }
+            });
 
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -473,11 +347,11 @@
                     document.getElementById('boardPage').style.display = 'block';
                     loadPosts();
                 } else {
-                    document.getElementById('loginPage').style.display = 'block';
                     document.getElementById('boardPage').style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'block';
                 }
             });
-
-        </script>
-    </body>
+        });
+    </script>
+</body>
 </html>
