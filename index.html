@@ -132,6 +132,16 @@
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
+	<div class="post">
+	    <!-- 既存の投稿内容 -->
+    		<!-- 返信アイコン -->
+    		<span class="reply-icon" onclick="toggleReplyForm(this)">💬</span>
+   	 	<!-- 返信フォーム -->
+   	 	<div class="reply-form" style="display:none;">
+    		    <textarea class="reply-textarea" rows="3" placeholder="返信内容を入力してください"></textarea>
+  	  	    <button class="reply-button" onclick="submitReply(this)">返信する</button>
+  	  	</div>
+	</div>
         <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
     
@@ -421,7 +431,45 @@
                 }
             };
 
-            onAuthStateChanged(auth, async (user) => {
+            // 投稿に返信フォームを切り替える関数
+function toggleReplyForm(icon) {
+    const replyForm = icon.nextElementSibling;
+    if (replyForm.style.display === 'none') {
+        // 返信フォームを表示する
+        replyForm.style.display = 'block';
+    } else {
+        // 返信フォームを非表示にする
+        replyForm.style.display = 'none';
+    }
+}
+
+// 返信を投稿する関数
+async function submitReply(button) {
+    const replyForm = button.parentElement;
+    const replyTextarea = replyForm.querySelector('.reply-textarea');
+    const replyContent = replyTextarea.value.trim();
+    const postId = button.closest('.post').getAttribute('data-post-id');
+    
+    if (replyContent !== '') {
+        // データベースに返信を保存する処理を記述
+        const response = await saveReply(postId, replyContent);
+        
+        // 保存に成功した場合の処理
+        if (response.success) {
+        //         // 返信フォームを非表示にする
+           replyForm.style.display = 'none';
+        //         // 返信成功メッセージを表示するなどの処理
+        }
+    } else {
+        alert('返信内容を入力してください');
+    }
+}
+
+
+
+
+
+	onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     const userName = userDoc.data().name;
