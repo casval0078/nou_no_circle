@@ -90,6 +90,23 @@
         #postForm button[type="submit"] {
             width: 100px; /* 例として固定の幅を100pxに指定 */
         }
+	.reply-icon {
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .reply-section {
+            display: none;
+            margin-top: 10px;
+        }
+        .reply-count {
+            margin-left: 5px;
+            color: grey;
+        }
+	.comment {
+ 	   margin-left: 20px;
+ 	   padding-left: 10px;
+  	  border-left: 2px solid #ccc;
+	}
     </style>
 </head>
 <body>
@@ -187,24 +204,16 @@
                 .catch((error) => {
                     // ログインに失敗した場合のエラーコードによって適切なメッセージを表示
                     const errorCode = error.code;
-                    let errorMessage = '';
-                    switch (errorCode) {
-                        case 'auth/user-not-found':
-                            errorMessage = 'ユーザーが見つかりませんでした。';
-                            break;
-                        case 'auth/wrong-password':
-                            errorMessage = 'パスワードが間違っています。';
-                            break;
-                        case 'auth/invalid-email':
-                            errorMessage = 'メールアドレスの形式が正しくありません。';
-                            break;
-                        default:
-                            errorMessage = 'ログインに失敗しました。';
-                            break;
+                    const errorMessage = error.message;
+                    if (errorCode === 'auth/wrong-password') {
+                        alert('パスワードが間違っています。');
+                    } else if (errorCode === 'auth/user-not-found') {
+                        alert('このメールアドレスのユーザーは見つかりません。');
+                    } else {
+                        alert(errorMessage);
                     }
-                    alert(errorMessage);
                 });
-        });
+            });
 
 
             signUpForm.addEventListener('submit', function(event) {
@@ -434,6 +443,100 @@
                     document.getElementById('boardPage').style.display = 'none';
                 }
             });
+        async function loadPosts() {
+                postsDiv.innerHTML = '';
+
+                let postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(10));
+
+                if (lastVisiblePost) {
+                    postsQuery = query(postsQuery, startAfter(lastVisiblePost));
+                }
+
+                const postSnapshot = await getDocs(postsQuery);
+                if (!postSnapshot.empty) {
+                    lastVisiblePost = postSnapshot.docs[postSnapshot.docs.length - 1];
+                }
+
+                postSnapshot.forEach((doc) => {
+                    const postData = doc.data();
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'post';
+                    postDiv.innerHTML = `
+                        <h3>${postData.userName}</h3>
+                        <p>${postData.comment}</p>
+                        ${postData.fileURL ? (postData.fileType.startsWith('image/') ? `<img src="${postData.fileURL}" alt="Uploaded Image">` : (postData.fileType.startsWith('video/') ? `<video src="${postData.fileURL}" controls></video>` : `<a href="${postData.fileURL}" class="file-link">ファイルを表示</a>`)) : ''}
+                        <div class="actions">
+                            <span class="reply-icon">💬</span><span class="reply-count">0</span>
+                            <span class="like-icon">❤️</span>
+                        </div>
+                        <div class="reply-section">
+                            <textarea class="reply-input" placeholder="返信を書く"></textarea>
+                            <button class="submit-reply">返信</button>
+                            <div class="comments"></div>
+                        </div>
+                    `;
+
+                    const replyIcon = postDiv.querySelector('.reply-icon');
+                    const replySection = postDiv.querySelector('.reply-section');
+                    const submitReplyButton = postDiv.querySelector('.submit-reply');
+                    const replyInput = postDiv.querySelector('.reply-input');
+                    const commentsDiv = postDiv.querySelector('.comments');
+                    const replyCountSpan = postDiv.querySelector('.reply-count');
+                    const likeIcon = postDiv.querySelector('.like-icon');
+
+                    replyIcon.addEventListener('click', () => {
+                        replySection.style.display = replySection.style.display === 'none' ? 'block' : 'none';
+                    });
+
+                    submitReplyButton.addEventListener('click', async () => {
+                        const reply = replyInput.value;
+                        if (!reply) return;
+
+                        const user = auth.currentUser;
+                        if (!user) {
+                            alert('返信するにはログインが必要です。');
+                            return;
+                        }
+
+                        try {
+                            const replyDocRef = await addDoc(collection(db, 'posts', doc.id, 'comments'), {
+                                reply,
+                                userId: user.uid,
+                                userName: (await getDoc(doc(db, 'users', user.uid))).data().name,
+                                createdAt: serverTimestamp()
+                            });
+
+                            const replyDiv = document.createElement('div');
+                            replyDiv.className = 'comment';
+                            replyDiv.innerHTML = `<strong>${(await getDoc(doc(db, 'users', user.uid))).data().name}:</strong> ${reply}`;
+                            commentsDiv.appendChild(replyDiv);
+
+                            replyInput.value = '';
+                            const currentReplyCount = parseInt(replyCountSpan.innerText);
+                            replyCountSpan.innerText = currentReplyCount + 1;
+                        } catch (error) {
+                            console.error('返信に失敗しました:', error);
+                            alert('返信に失敗しました。');
+                        }
+                    });
+
+                    let liked = false;
+                    likeIcon.addEventListener('click', () => {
+                        liked = !liked;
+                        likeIcon.classList.toggle('liked', liked);
+                    });
+
+                    postsDiv.appendChild(postDiv);
+                });
+
+                if (postSnapshot.size === 10) {
+                    loadMoreButton.style.display = 'block';
+                } else {
+                    loadMoreButton.style.display = 'none';
+                }
+            }
+
+            loadMoreButton.addEventListener('click', loadPosts);
         });
     </script>
 </body>
