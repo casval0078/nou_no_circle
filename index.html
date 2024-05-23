@@ -132,16 +132,16 @@
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
-	<div class="post">
-	    <!-- 既存の投稿内容 -->
-    		<!-- 返信アイコン -->
-    		<span class="reply-icon" onclick="toggleReplyForm(this)">💬</span>
-   	 	<!-- 返信フォーム -->
-   	 	<div class="reply-form" style="display:none;">
-    		    <textarea class="reply-textarea" rows="3" placeholder="返信内容を入力してください"></textarea>
-  	  	    <button class="reply-button" onclick="submitReply(this)">返信する</button>
-  	  	</div>
-	</div>
+	<div class="post" data-post-id="{各投稿のID}">
+    <!-- 既存の投稿内容 -->
+    <!-- 返信アイコン -->
+    <span class="reply-icon" onclick="toggleReplyForm(this)">💬</span>
+    <!-- 返信フォーム -->
+    <div class="reply-form" style="display:none;">
+        <textarea class="reply-textarea" rows="3" placeholder="返信内容を入力してください"></textarea>
+        <button class="reply-button" onclick="submitReply(this)">返信する</button>
+    </div>
+</div>
         <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
     
