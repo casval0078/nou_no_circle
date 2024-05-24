@@ -98,6 +98,26 @@
             margin-top: 20px; /* 上に余白を追加 */
             text-align: center; /* 中央揃えにする */
         }
+        .reply-icon {
+            cursor: pointer;
+            color: blue;
+            margin-left: 10px;
+        }
+
+        .reply-form {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .reply-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        .reply-button {
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -323,58 +343,129 @@
             }
             
             // 投稿を表示する関数
-            function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
-                
-                // Display media if available
-                if (postData.fileURL && postData.fileType) {
-                    if (postData.fileType.includes('image')) {
-                        const imgElement = document.createElement('img');
-                        imgElement.src = postData.fileURL;
-                        imgElement.style.maxWidth = '200px';
-                        imgElement.style.height = 'auto';
-                        imgElement.style.cursor = 'pointer';
-                        imgElement.onclick = function() {
-                            window.open(postData.fileURL);
-                        };
-                        postDiv.appendChild(imgElement);
-                    } else if (postData.fileType.includes('video')) {
-                        const videoElement = document.createElement('video');
-                        videoElement.src = postData.fileURL;
-                        videoElement.style.maxWidth = '200px';
-                        videoElement.style.height = 'auto';
-                        videoElement.controls = true;
-                        postDiv.appendChild(videoElement);
-                    } else {
-                        const fileLink = document.createElement('a');
-                        fileLink.href = postData.fileURL;
-                        fileLink.innerText = 'ファイルをダウンロード';
-                        fileLink.target = '_blank';
-                        postDiv.appendChild(fileLink);
-                    }
-                }
-                
-                // 投稿者のみが投稿を削除できる機能
-                const currentUser = auth.currentUser;
-                if (currentUser && postData.uid === currentUser.uid) {
-                    const deleteText = document.createElement('span');
-                    deleteText.innerText = '削除';
-                    deleteText.style.cursor = 'pointer';
-                    deleteText.style.color = 'blue';
-                    deleteText.addEventListener('click', async () => {
-                        if (confirm('この投稿を削除しますか？')) {
-                            await deletePost(doc.id);
-                        }
-                    });
-                    postDiv.appendChild(deleteText);
-                }
-                postsDiv.appendChild(postDiv);
+function displayPost(doc) {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+    const postData = doc.data();
+    const timestamp = postData.timestamp.toDate();
+    const dateString = timestamp.toLocaleString();
+    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
+    
+    // Display media if available
+    if (postData.fileURL && postData.fileType) {
+        if (postData.fileType.includes('image')) {
+            const imgElement = document.createElement('img');
+            imgElement.src = postData.fileURL;
+            imgElement.style.maxWidth = '200px';
+            imgElement.style.height = 'auto';
+            imgElement.style.cursor = 'pointer';
+            imgElement.onclick = function() {
+                window.open(postData.fileURL);
+            };
+            postDiv.appendChild(imgElement);
+        } else if (postData.fileType.includes('video')) {
+            const videoElement = document.createElement('video');
+            videoElement.src = postData.fileURL;
+            videoElement.style.maxWidth = '200px';
+            videoElement.style.height = 'auto';
+            videoElement.controls = true;
+            postDiv.appendChild(videoElement);
+        } else {
+            const fileLink = document.createElement('a');
+            fileLink.href = postData.fileURL;
+            fileLink.innerText = 'ファイルをダウンロード';
+            fileLink.target = '_blank';
+            postDiv.appendChild(fileLink);
+        }
+    }
+
+    // Reply icon
+    const replyIcon = document.createElement('span');
+    replyIcon.className = 'reply-icon';
+    replyIcon.innerHTML = '&#x1F5E8;'; // 吹き出しアイコン
+    postDiv.appendChild(replyIcon);
+
+    // Reply form
+    const replyForm = document.createElement('div');
+    replyForm.className = 'reply-form';
+    replyForm.innerHTML = `
+        <textarea class="reply-textarea" placeholder="返信を入力..."></textarea>
+        <button class="reply-button">返信</button>
+    `;
+    postDiv.appendChild(replyForm);
+
+    // Reply icon click event
+    replyIcon.addEventListener('click', function() {
+        replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Reply button event
+    const replyButton = replyForm.querySelector('.reply-button');
+    replyButton.addEventListener('click', async function() {
+        const replyTextarea = replyForm.querySelector('.reply-textarea');
+        const replyComment = replyTextarea.value.trim();
+        if (replyComment) {
+            try {
+                const user = auth.currentUser;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                await addDoc(collection(db, 'replies'), {
+                    postId: doc.id,
+                    uid: user.uid,
+                    username: userName,
+                    comment: replyComment,
+                    timestamp: serverTimestamp()
+                });
+                replyTextarea.value = '';
+                replyForm.style.display = 'none';
+                loadReplies(doc.id, postDiv);
+            } catch (error) {
+                alert(error.message);
             }
+        } else {
+            alert('返信を入力してください');
+        }
+    });
+
+    // 投稿者のみが投稿を削除できる機能
+    const currentUser = auth.currentUser;
+    if (currentUser && postData.uid === currentUser.uid) {
+        const deleteText = document.createElement('span');
+        deleteText.innerText = '削除';
+        deleteText.style.cursor = 'pointer';
+        deleteText.style.color = 'blue';
+        deleteText.addEventListener('click', async () => {
+            if (confirm('この投稿を削除しますか？')) {
+                await deletePost(doc.id);
+            }
+        });
+        postDiv.appendChild(deleteText);
+    }
+
+    postsDiv.appendChild(postDiv);
+    loadReplies(doc.id, postDiv); // Load replies for the post
+}
+
+// Function to load replies for a post
+async function loadReplies(postId, postDiv) {
+    const repliesDiv = document.createElement('div');
+    repliesDiv.className = 'replies';
+    postDiv.appendChild(repliesDiv);
+
+    const q = query(collection(db, 'replies'), where('postId', '==', postId), orderBy('timestamp', 'asc'));
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((doc) => {
+        const replyData = doc.data();
+        const replyDiv = document.createElement('div');
+        replyDiv.className = 'comment';
+        const timestamp = replyData.timestamp.toDate();
+        const dateString = timestamp.toLocaleString();
+        replyDiv.innerHTML = `<p><strong>${replyData.username}</strong> (${dateString}):<br>${formatComment(replyData.comment)}</p>`;
+        repliesDiv.appendChild(replyDiv);
+    });
+}
+
 
             // 投稿を削除する関数
             async function deletePost(postId) {
