@@ -166,7 +166,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -448,22 +448,25 @@ function displayPost(doc) {
 
 // Function to load replies for a post
 async function loadReplies(postId, postDiv) {
-    const repliesDiv = document.createElement('div');
-    repliesDiv.className = 'replies';
-    postDiv.appendChild(repliesDiv);
-
-    const q = query(collection(db, 'replies'), where('postId', '==', postId), orderBy('timestamp', 'asc'));
-    const querySnapshot = await getDocs(q);
-
-    querySnapshot.forEach((doc) => {
-        const replyData = doc.data();
-        const replyDiv = document.createElement('div');
-        replyDiv.className = 'comment';
-        const timestamp = replyData.timestamp.toDate();
-        const dateString = timestamp.toLocaleString();
-        replyDiv.innerHTML = `<p><strong>${replyData.username}</strong> (${dateString}):<br>${formatComment(replyData.comment)}</p>`;
-        repliesDiv.appendChild(replyDiv);
-    });
+    const repliesDiv = postDiv.querySelector('.replies');
+    if (!repliesDiv) {
+        const newRepliesDiv = document.createElement('div');
+        newRepliesDiv.className = 'replies';
+        postDiv.appendChild(newRepliesDiv);
+        const q = query(collection(db, 'replies'), where('postId', '==', postId), orderBy('timestamp', 'asc'));
+        onSnapshot(q, (querySnapshot) => {
+            newRepliesDiv.innerHTML = ''; // Clear existing replies
+            querySnapshot.forEach((doc) => {
+                const replyData = doc.data();
+                const replyDiv = document.createElement('div');
+                replyDiv.className = 'comment';
+                const timestamp = replyData.timestamp.toDate();
+                const dateString = timestamp.toLocaleString();
+                replyDiv.innerHTML = `<p><strong>${replyData.username}</strong> (${dateString}):<br>${formatComment(replyData.comment)}</p>`;
+                newRepliesDiv.appendChild(replyDiv);
+            });
+        });
+    }
 }
 
 
