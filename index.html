@@ -342,7 +342,42 @@
                 return comment.replace(/\n/g, '<br>');
             }
             
-            // 投稿を表示する関数
+            // 返信を保存する関数
+async function saveReply(postId, comment, user) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userName = userDoc.data().name;
+    await addDoc(collection(db, 'replies'), {
+        postId: postId,
+        uid: user.uid,
+        username: userName,
+        comment: comment,
+        timestamp: serverTimestamp()
+    });
+}
+
+// 返信ボタンのイベントリスナー
+document.addEventListener('submit', function(event) {
+    if (event.target.classList.contains('replyForm')) {
+        event.preventDefault();
+        const replyForm = event.target;
+        const postId = replyForm.dataset.postId;
+        const comment = replyForm.querySelector('textarea').value;
+        const user = auth.currentUser;
+        if (comment && user) {
+            saveReply(postId, comment, user)
+                .then(() => {
+                    replyForm.querySelector('textarea').value = ''; // Clear the textarea after saving
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        } else {
+            alert('コメントを入力してください');
+        }
+    }
+});
+
+// 投稿表示関数の変更
 function displayPost(doc) {
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
@@ -379,53 +414,22 @@ function displayPost(doc) {
         }
     }
 
-    // Reply icon
-    const replyIcon = document.createElement('span');
-    replyIcon.className = 'reply-icon';
-    replyIcon.innerHTML = '&#x1F5E8;'; // 吹き出しアイコン
-    postDiv.appendChild(replyIcon);
-
-    // Reply form
-    const replyForm = document.createElement('div');
-    replyForm.className = 'reply-form';
+    // Reply field and button
+    const replyForm = document.createElement('form');
+    replyForm.className = 'replyForm';
+    replyForm.dataset.postId = doc.id;
     replyForm.innerHTML = `
-        <textarea class="reply-textarea" placeholder="返信を入力..."></textarea>
-        <button class="reply-button">返信</button>
+        <label for="reply">返信:</label>
+        <textarea name="reply" required></textarea>
+        <button type="submit">返信</button>
     `;
     postDiv.appendChild(replyForm);
 
-    // Reply icon click event
-    replyIcon.addEventListener('click', function() {
-        replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-    });
+    // Load replies
+    loadReplies(doc.id, postDiv);
 
-    // Reply button event
-    const replyButton = replyForm.querySelector('.reply-button');
-    replyButton.addEventListener('click', async function() {
-        const replyTextarea = replyForm.querySelector('.reply-textarea');
-        const replyComment = replyTextarea.value.trim();
-        if (replyComment) {
-            try {
-                const user = auth.currentUser;
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
-                await addDoc(collection(db, 'replies'), {
-                    postId: doc.id,
-                    uid: user.uid,
-                    username: userName,
-                    comment: replyComment,
-                    timestamp: serverTimestamp()
-                });
-                replyTextarea.value = '';
-                replyForm.style.display = 'none';
-                loadReplies(doc.id, postDiv);
-            } catch (error) {
-                alert(error.message);
-            }
-        } else {
-            alert('返信を入力してください');
-        }
-    });
+    postsDiv.appendChild(postDiv);
+}
 
     // 投稿者のみが投稿を削除できる機能
     const currentUser = auth.currentUser;
