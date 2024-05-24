@@ -343,41 +343,41 @@
             }
             
             // 返信を保存する関数
-async function saveReply(postId, comment, user) {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const userName = userDoc.data().name;
-    await addDoc(collection(db, 'replies'), {
-        postId: postId,
-        uid: user.uid,
-        username: userName,
-        comment: comment,
-        timestamp: serverTimestamp()
-    });
-}
-
-// 返信ボタンのイベントリスナー
-document.addEventListener('submit', function(event) {
-    if (event.target.classList.contains('replyForm')) {
-        event.preventDefault();
-        const replyForm = event.target;
-        const postId = replyForm.dataset.postId;
-        const comment = replyForm.querySelector('textarea').value;
-        const user = auth.currentUser;
-        if (comment && user) {
-            saveReply(postId, comment, user)
-                .then(() => {
-                    replyForm.querySelector('textarea').value = ''; // Clear the textarea after saving
-                })
-                .catch((error) => {
-                    alert(error.message);
+            async function saveReply(postId, comment, user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                await addDoc(collection(db, 'replies'), {
+                    postId: postId,
+                    uid: user.uid,
+                    username: userName,
+                    comment: comment,
+                    timestamp: serverTimestamp()
                 });
-        } else {
-            alert('コメントを入力してください');
-        }
-    }
-});
+            }
 
-// 投稿表示関数の変更
+            // 返信ボタンのイベントリスナー
+            document.addEventListener('submit', function(event) {
+                if (event.target.classList.contains('replyForm')) {
+                    event.preventDefault();
+                    const replyForm = event.target;
+                    const postId = replyForm.dataset.postId;
+                    const comment = replyForm.querySelector('textarea').value;
+                    const user = auth.currentUser;
+                    if (comment && user) {
+                        saveReply(postId, comment, user)
+                            .then(() => {
+                                replyForm.querySelector('textarea').value = ''; // Clear the textarea after saving
+                            })
+                            .catch((error) => {
+                                alert(error.message);
+                            });
+                    } else {
+                        alert('コメントを入力してください');
+                    }
+                }
+            });
+
+            // Function to display a post
 function displayPost(doc) {
     const postDiv = document.createElement('div');
     postDiv.className = 'post';
@@ -385,7 +385,7 @@ function displayPost(doc) {
     const timestamp = postData.timestamp.toDate();
     const dateString = timestamp.toLocaleString();
     postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
-    
+
     // Display media if available
     if (postData.fileURL && postData.fileType) {
         if (postData.fileType.includes('image')) {
@@ -429,7 +429,6 @@ function displayPost(doc) {
     loadReplies(doc.id, postDiv);
 
     postsDiv.appendChild(postDiv);
-}
 
     // 投稿者のみが投稿を削除できる機能
     const currentUser = auth.currentUser;
@@ -445,9 +444,13 @@ function displayPost(doc) {
         });
         postDiv.appendChild(deleteText);
     }
+}
 
-    postsDiv.appendChild(postDiv);
-    loadReplies(doc.id, postDiv); // Load replies for the post
+// 投稿を削除する関数
+async function deletePost(postId) {
+    const postRef = doc(db, 'posts', postId);
+    await deleteDoc(postRef);
+    loadPosts(); // 削除後に投稿を再読込
 }
 
 // Function to load replies for a post
