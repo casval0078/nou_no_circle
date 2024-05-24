@@ -469,7 +469,6 @@ async function loadReplies(postId, postDiv) {
     }
 }
 
-
             // 投稿を削除する関数
             async function deletePost(postId) {
                 await deleteDoc(doc(db, 'posts', postId));
