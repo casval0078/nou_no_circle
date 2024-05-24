@@ -90,34 +90,6 @@
         #postForm button[type="submit"] {
             width: 100px; /* 例として固定の幅を100pxに指定 */
         }
-        /* リンクを隠すためのスタイル */
-        .hidden-link {
-            color: white;
-            text-decoration: none;
-            display: block;
-            margin-top: 20px; /* 上に余白を追加 */
-            text-align: center; /* 中央揃えにする */
-        }
-        .reply-icon {
-            cursor: pointer;
-            color: blue;
-            margin-left: 10px;
-        }
-
-        .reply-form {
-            display: none;
-            margin-top: 10px;
-        }
-
-        .reply-textarea {
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-
-        .reply-button {
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -166,7 +138,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -342,139 +314,59 @@
                 return comment.replace(/\n/g, '<br>');
             }
             
-            // 返信を保存する関数
-            async function saveReply(postId, comment, user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
-                await addDoc(collection(db, 'replies'), {
-                    postId: postId,
-                    uid: user.uid,
-                    username: userName,
-                    comment: comment,
-                    timestamp: serverTimestamp()
-                });
-            }
-
-            // 返信ボタンのイベントリスナー
-            document.addEventListener('submit', function(event) {
-                if (event.target.classList.contains('replyForm')) {
-                    event.preventDefault();
-                    const replyForm = event.target;
-                    const postId = replyForm.dataset.postId;
-                    const comment = replyForm.querySelector('textarea').value;
-                    const user = auth.currentUser;
-                    if (comment && user) {
-                        saveReply(postId, comment, user)
-                            .then(() => {
-                                replyForm.querySelector('textarea').value = ''; // Clear the textarea after saving
-                            })
-                            .catch((error) => {
-                                alert(error.message);
-                            });
+            // 投稿を表示する関数
+            function displayPost(doc) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                const postData = doc.data();
+                const timestamp = postData.timestamp.toDate();
+                const dateString = timestamp.toLocaleString();
+                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
+                
+                // Display media if available
+                if (postData.fileURL && postData.fileType) {
+                    if (postData.fileType.includes('image')) {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = postData.fileURL;
+                        imgElement.style.maxWidth = '200px';
+                        imgElement.style.height = 'auto';
+                        imgElement.style.cursor = 'pointer';
+                        imgElement.onclick = function() {
+                            window.open(postData.fileURL);
+                        };
+                        postDiv.appendChild(imgElement);
+                    } else if (postData.fileType.includes('video')) {
+                        const videoElement = document.createElement('video');
+                        videoElement.src = postData.fileURL;
+                        videoElement.style.maxWidth = '200px';
+                        videoElement.style.height = 'auto';
+                        videoElement.controls = true;
+                        postDiv.appendChild(videoElement);
                     } else {
-                        alert('コメントを入力してください');
+                        const fileLink = document.createElement('a');
+                        fileLink.href = postData.fileURL;
+                        fileLink.innerText = 'ファイルをダウンロード';
+                        fileLink.target = '_blank';
+                        postDiv.appendChild(fileLink);
                     }
                 }
-            });
-
-            // Function to display a post
-function displayPost(doc) {
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
-    const postData = doc.data();
-    const timestamp = postData.timestamp.toDate();
-    const dateString = timestamp.toLocaleString();
-    postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
-
-    // Display media if available
-    if (postData.fileURL && postData.fileType) {
-        if (postData.fileType.includes('image')) {
-            const imgElement = document.createElement('img');
-            imgElement.src = postData.fileURL;
-            imgElement.style.maxWidth = '200px';
-            imgElement.style.height = 'auto';
-            imgElement.style.cursor = 'pointer';
-            imgElement.onclick = function() {
-                window.open(postData.fileURL);
-            };
-            postDiv.appendChild(imgElement);
-        } else if (postData.fileType.includes('video')) {
-            const videoElement = document.createElement('video');
-            videoElement.src = postData.fileURL;
-            videoElement.style.maxWidth = '200px';
-            videoElement.style.height = 'auto';
-            videoElement.controls = true;
-            postDiv.appendChild(videoElement);
-        } else {
-            const fileLink = document.createElement('a');
-            fileLink.href = postData.fileURL;
-            fileLink.innerText = 'ファイルをダウンロード';
-            fileLink.target = '_blank';
-            postDiv.appendChild(fileLink);
-        }
-    }
-
-    // Reply field and button
-    const replyForm = document.createElement('form');
-    replyForm.className = 'replyForm';
-    replyForm.dataset.postId = doc.id;
-    replyForm.innerHTML = `
-        <label for="reply">返信:</label>
-        <textarea name="reply" required></textarea>
-        <button type="submit">返信</button>
-    `;
-    postDiv.appendChild(replyForm);
-
-    // Load replies
-    loadReplies(doc.id, postDiv);
-
-    postsDiv.appendChild(postDiv);
-
-    // 投稿者のみが投稿を削除できる機能
-    const currentUser = auth.currentUser;
-    if (currentUser && postData.uid === currentUser.uid) {
-        const deleteText = document.createElement('span');
-        deleteText.innerText = '削除';
-        deleteText.style.cursor = 'pointer';
-        deleteText.style.color = 'blue';
-        deleteText.addEventListener('click', async () => {
-            if (confirm('この投稿を削除しますか？')) {
-                await deletePost(doc.id);
+                
+                // 投稿者のみが投稿を削除できる機能
+                const currentUser = auth.currentUser;
+                if (currentUser && postData.uid === currentUser.uid) {
+                    const deleteText = document.createElement('span');
+                    deleteText.innerText = '削除';
+                    deleteText.style.cursor = 'pointer';
+                    deleteText.style.color = 'blue';
+                    deleteText.addEventListener('click', async () => {
+                        if (confirm('この投稿を削除しますか？')) {
+                            await deletePost(doc.id);
+                        }
+                    });
+                    postDiv.appendChild(deleteText);
+                }
+                postsDiv.appendChild(postDiv);
             }
-        });
-        postDiv.appendChild(deleteText);
-    }
-}
-
-// 投稿を削除する関数
-async function deletePost(postId) {
-    const postRef = doc(db, 'posts', postId);
-    await deleteDoc(postRef);
-    loadPosts(); // 削除後に投稿を再読込
-}
-
-// Function to load replies for a post
-async function loadReplies(postId, postDiv) {
-    const repliesDiv = postDiv.querySelector('.replies');
-    if (!repliesDiv) {
-        const newRepliesDiv = document.createElement('div');
-        newRepliesDiv.className = 'replies';
-        postDiv.appendChild(newRepliesDiv);
-        const q = query(collection(db, 'replies'), where('postId', '==', postId), orderBy('timestamp', 'asc'));
-        onSnapshot(q, (querySnapshot) => {
-            newRepliesDiv.innerHTML = ''; // Clear existing replies
-            querySnapshot.forEach((doc) => {
-                const replyData = doc.data();
-                const replyDiv = document.createElement('div');
-                replyDiv.className = 'comment';
-                const timestamp = replyData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                replyDiv.innerHTML = `<p><strong>${replyData.username}</strong> (${dateString}):<br>${formatComment(replyData.comment)}</p>`;
-                newRepliesDiv.appendChild(replyDiv);
-            });
-        });
-    }
-}
 
             // 投稿を削除する関数
             async function deletePost(postId) {
@@ -546,3 +438,4 @@ async function loadReplies(postId, postDiv) {
     </script>
 </body>
 </html>
+
