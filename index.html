@@ -150,7 +150,6 @@
         }
 
         .delete-link {
-	    color: blue;
             cursor: pointer;
         }
 
@@ -213,7 +212,7 @@
             <button id="logoutButton">ログアウト</button>
         </div>
         <form id="postForm">
-            <label for="comment">コメント:</label>
+            <label for="comment">投稿:</label>
             <textarea id="comment" name="comment" required></textarea>
             <label for="file">ファイル添付:</label>
             <input type="file" id="file" name="file">
@@ -279,23 +278,28 @@
             });
 
             signUpForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('signUpEmail').value;
-                const password = document.getElementById('signUpPassword').value;
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then(async (userCredential) => {
-                        const user = userCredential.user;
-                        await setDoc(doc(db, 'users', user.uid), { name: name });
-                        boardPageTitle.innerText = `ログイン名: ${name}`;
-                        document.getElementById('loginPage').style.display = 'none';
-                        document.getElementById('boardPage').style.display = 'block';
-                        loadPosts();
-                    })
-                    .catch((error) => {
-                        console.error("サインアップエラー:", error.message);
-                    });
-            });
+   		 event.preventDefault();
+ 		   const name = document.getElementById('name').value;
+ 		   const email = document.getElementById('signUpEmail').value;
+		    const password = document.getElementById('signUpPassword').value;
+		    createUserWithEmailAndPassword(auth, email, password)
+		        .then((userCredential) => {
+  		          const user = userCredential.user;
+  		          return setDoc(doc(db, 'users', user.uid), {
+  		              name: name,
+   		             email: user.email,
+  		              password: password // パスワードを保存
+ 		           });
+     		   })
+    		    .then(() => {
+    		        alert('サインアップが成功しました。ログインしてください。');
+     		       signUpForm.style.display = 'none';
+     		       loginForm.style.display = 'block';
+    		    })
+    		    .catch((error) => {
+    		        alert(error.message);
+    		    });
+		});
 
             signUpLink.addEventListener('click', function(event) {
                 event.preventDefault();
@@ -521,9 +525,7 @@
             }
         });
     </script>
-	<div id="invisibleLink" style="position: absolute; bottom: 0; right: 0; height: 1px; background: transparent;">
+<div id="invisibleLink" style="position: absolute; bottom: 0; right: 0; height: 1px; background: transparent;">
     <a href="https://casval0078.github.io/hozon/">㊙</a>
-
 </body>
 </html>
-
