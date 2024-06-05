@@ -4,89 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>のぅの秘密のお部屋</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
-	header {
-    background-color: #333;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-header h1 {
-    margin: 0;
-}
+        header h1 {
+            margin: 0;
+        }
 
-header button {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
+        header button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-body {
-    font-family: Arial, sans-serif;
-}
-
-.page {
-    width: 300px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-h1 {
-    text-align: center;
-}
-
-label {
-    display: block;
-    margin-top: 10px;
-}
-
-input, textarea, button {
-    width: 100%;
-    margin-top: 5px;
-}
-
-button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-#posts {
-    margin-top: 20px;
-}
-
-.post {
-    border-bottom: 1px solid #ccc;
-    padding: 10px 0;
-}
-
-.post strong {
-    margin-right: 5px;
-}
-
-.timestamp {
-    font-size: 0.8em;
-    color: #666;
-}
-        /* 追加のCSSスタイル */
         body {
+            font-family: Arial, sans-serif;
             background: url('https://raw.githubusercontent.com/casval0078/nou_no_circle/main/FwATKJFagAAPZOD.jpg') no-repeat center center fixed;
             background-size: cover;
             backdrop-filter: blur(5px);
@@ -98,7 +41,7 @@ button:hover {
         }
 
         .page {
-            background-color: rgba(255, 255, 255, 0.8); /* 背景の透過 */
+            background-color: rgba(255, 255, 255, 0.8);
             padding: 20px;
             border-radius: 10px;
             margin: 20px;
@@ -106,47 +49,60 @@ button:hover {
             width: 100%;
             box-sizing: border-box;
             overflow: auto;
-            max-height: 90vh; /* 画面に収まるように設定 */
+            max-height: 90vh;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #posts {
+            margin-top: 20px;
         }
 
         .post {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
             margin-bottom: 20px;
-            word-wrap: break-word; /* 長い投稿への対応 */
+            word-wrap: break-word;
         }
 
         .post img,
         .post video {
-            max-width: 100%; /* 画像や動画の幅を親要素に合わせる */
+            max-width: 100%;
             height: auto;
-            cursor: pointer; /* クリックやタップで全画面表示 */
-            display: block; /* インライン表示からブロック表示に変更 */
-            margin: 10px 0; /* 画像や動画の上下に余白を追加 */
+            cursor: pointer;
+            display: block;
+            margin: 10px 0;
         }
 
-        #boardHeader {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #posts {
-            width: 100%;
-        }
-
-        textarea {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* 追加のスタイル */
-        .comment {
+        .post .comment {
             margin-left: 20px;
             padding-left: 10px;
             border-left: 2px solid #ccc;
-        }
-
-        .comment-input {
-            margin-top: 10px;
         }
 
         .actions {
@@ -164,10 +120,62 @@ button:hover {
         .file-link {
             margin-top: 10px;
         }
-        /* 追加のCSSスタイル */
+
+        #boardHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+	    height: 60px;
+            box-sizing: border-box;
+        }
+
         #logoutButton,
         #postForm button[type="submit"] {
-            width: 100px; /* 例として固定の幅を100pxに指定 */
+            width: 100px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-header span {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .delete-link {
+            cursor: pointer;
+        }
+
+        .delete-link img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .reply-icon {
+            cursor: pointer;
+            font-size: 12px; /* 返信ボタンを小さくする */
+            margin-right: 10px;
+        }
+
+        .replies {
+            margin-left: 20px;
+        }
+
+        .reply {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        
+        .reply-form {
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -244,47 +252,30 @@ button:hover {
             const logoutButton = document.getElementById('logoutButton');
             const boardPage = document.getElementById('boardPage');
             const postsDiv = document.getElementById('posts');
-            const boardPageTitle = document.getElementById('boardPageTitle');
             const loadMoreButton = document.getElementById('loadMoreButton');
-
-            let lastVisiblePost;
+            const boardPageTitle = document.getElementById('boardPageTitle');
+            let lastVisiblePost = null;
 
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 signInWithEmailAndPassword(auth, email, password)
-                    .then(async (userCredential) => {
-                    const user = userCredential.user;
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `ログイン名: ${userName}`;
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('boardPage').style.display = 'block';
-                    loadPosts();
-                })
-                .catch((error) => {
-                    // ログインに失敗した場合のエラーコードによって適切なメッセージを表示
-                    const errorCode = error.code;
-                    let errorMessage = '';
-                    switch (errorCode) {
-                        case 'auth/user-not-found':
-                            errorMessage = 'ユーザーが見つかりませんでした。';
-                            break;
-                        case 'auth/wrong-password':
-                            errorMessage = 'パスワードが間違っています。';
-                            break;
-                        case 'auth/invalid-email':
-                            errorMessage = 'メールアドレスの形式が正しくありません。';
-                            break;
-                        default:
-                            errorMessage = 'ログインに失敗しました。';
-                            break;
-                    }
-                    alert(errorMessage);
-                });
-        });
-
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        getDoc(doc(db, 'users', user.uid)).then(docSnap => {
+                            if (docSnap.exists()) {
+                                boardPageTitle.innerText = `ログイン名: ${docSnap.data().name}`;
+                                document.getElementById('loginPage').style.display = 'none';
+                                document.getElementById('boardPage').style.display = 'block';
+                                loadPosts();
+                            }
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("ログインエラー:", error.message);
+                    });
+            });
 
             signUpForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -292,171 +283,72 @@ button:hover {
                 const email = document.getElementById('signUpEmail').value;
                 const password = document.getElementById('signUpPassword').value;
                 createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
+                    .then(async (userCredential) => {
                         const user = userCredential.user;
-                        return setDoc(doc(db, 'users', user.uid), {
-                            name: name,
-                            email: user.email,
-                            password: password
-                        });
-                    })
-                    .then(() => {
-                        alert('サインアップが成功しました。ログインしてください。');
-                        signUpForm.style.display = 'none';
-                        loginForm.style.display = 'block';
+                        await setDoc(doc(db, 'users', user.uid), { name: name });
+                        boardPageTitle.innerText = `ログイン名: ${name}`;
+                        document.getElementById('loginPage').style.display = 'none';
+                        document.getElementById('boardPage').style.display = 'block';
+                        loadPosts();
                     })
                     .catch((error) => {
-                        alert(error.message);
+                        console.error("サインアップエラー:", error.message);
                     });
             });
 
-            signUpLink.addEventListener('click', function() {
+            signUpLink.addEventListener('click', function(event) {
+                event.preventDefault();
                 loginForm.style.display = 'none';
                 signUpForm.style.display = 'block';
             });
 
-            loginLink.addEventListener('click', function() {
+            loginLink.addEventListener('click', function(event) {
+                event.preventDefault();
                 signUpForm.style.display = 'none';
                 loginForm.style.display = 'block';
             });
 
-            const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-
-            function isImage(file) {
-                return imageMimeTypes.includes(file.type);
-            }
-
-            function isVideo(file) {
-                return videoMimeTypes.includes(file.type);
-            }
-
-            // ファイルのアップロード処理
             postForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const comment = document.getElementById('comment').value;
-                const file = document.getElementById('file').files[0];
+                const fileInput = document.getElementById('file');
                 const user = auth.currentUser;
-                if (comment && user) {
-                    try {
-                        let fileElement;
-                        let downloadURL = '';
-                        if (file) {
-                            const storageRef = ref(storage, `files/${file.name}`);
-                            const uploadTask = uploadBytesResumable(storageRef, file);
 
-                            uploadTask.on('state_changed', 
-                                (snapshot) => {
-                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                    console.log('Upload is ' + progress + '% done');
-                                    // Display progress UI here
-                                }, 
-                                (error) => {
-                                    alert('Upload failed: ' + error.message);
-                                }, 
-                                async () => {
-                                    downloadURL = await getDownloadURL(storageRef);
-                                    await savePost(user, comment, downloadURL, file.type); // ファイルの種類も保存
-                                }
-                            );
-                        } else {
-                            await savePost(user, comment, downloadURL, ''); // ファイルがない場合は空文字列を保存
-                        }
-                    } catch (error) {
-                        alert(error.message);
-                    }
-                } else {
-                    alert('コメントを入力してください');
+                let fileUrl = null;
+                let fileType = null;
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, 'uploads/' + file.name);
+                    const uploadTask = await uploadBytesResumable(storageRef, file);
+                    fileUrl = await getDownloadURL(uploadTask.ref);
+                    fileType = file.type;
                 }
-            });
 
-            async function savePost(user, comment, downloadURL, fileType) {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
-                const userName = userDoc.data().name;
+                const userName = userDoc.exists() ? userDoc.data().name : '匿名';
 
                 await addDoc(collection(db, 'posts'), {
                     uid: user.uid,
-                    username: userName,
+                    name: userName,
                     comment: comment,
-                    fileURL: downloadURL,
-                    fileType: fileType, // ファイルの種類を保存
+                    fileUrl: fileUrl,
+                    fileType: fileType,
                     timestamp: serverTimestamp()
                 });
 
                 document.getElementById('comment').value = '';
                 document.getElementById('file').value = '';
-                loadPosts();
-            }
 
-            // コメントで改行を入れる関数
-            function formatComment(comment) {
-                return comment.replace(/\n/g, '<br>');
-            }
-            
-            // 投稿を表示する関数
-            function displayPost(doc) {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const postData = doc.data();
-                const timestamp = postData.timestamp.toDate();
-                const dateString = timestamp.toLocaleString();
-                postDiv.innerHTML = `<p><strong>${postData.username}</strong> (${dateString}):<br>${formatComment(postData.comment)}</p>`;
-                
-                // Display media if available
-                if (postData.fileURL && postData.fileType) {
-                    if (postData.fileType.includes('image')) {
-                        const imgElement = document.createElement('img');
-                        imgElement.src = postData.fileURL;
-                        imgElement.style.maxWidth = '200px';
-                        imgElement.style.height = 'auto';
-                        imgElement.style.cursor = 'pointer';
-                        imgElement.onclick = function() {
-                            window.open(postData.fileURL);
-                        };
-                        postDiv.appendChild(imgElement);
-                    } else if (postData.fileType.includes('video')) {
-                        const videoElement = document.createElement('video');
-                        videoElement.src = postData.fileURL;
-                        videoElement.style.maxWidth = '200px';
-                        videoElement.style.height = 'auto';
-                        videoElement.controls = true;
-                        postDiv.appendChild(videoElement);
-                    } else {
-                        const fileLink = document.createElement('a');
-                        fileLink.href = postData.fileURL;
-                        fileLink.innerText = 'ファイルをダウンロード';
-                        fileLink.target = '_blank';
-                        postDiv.appendChild(fileLink);
-                    }
-                }
-                
-                // 投稿者のみが投稿を削除できる機能
-                const currentUser = auth.currentUser;
-                if (currentUser && postData.uid === currentUser.uid) {
-                    const deleteText = document.createElement('span');
-                    deleteText.innerText = '削除';
-                    deleteText.style.cursor = 'pointer';
-                    deleteText.style.color = 'blue';
-                    deleteText.addEventListener('click', async () => {
-                        if (confirm('この投稿を削除しますか？')) {
-                            await deletePost(doc.id);
-                        }
-                    });
-                    postDiv.appendChild(deleteText);
-                }
-                postsDiv.appendChild(postDiv);
-            }
-
-            // 投稿を削除する関数
-            async function deletePost(postId) {
-                await deleteDoc(doc(db, 'posts', postId));
                 loadPosts();
-            }
-            
+            });
+
             logoutButton.addEventListener('click', function() {
                 signOut(auth).then(() => {
-                    boardPage.style.display = 'none';
+                    document.getElementById('boardPage').style.display = 'none';
                     document.getElementById('loginPage').style.display = 'block';
+                }).catch((error) => {
+                    console.error("ログアウトエラー:", error.message);
                 });
             });
 
@@ -464,56 +356,170 @@ button:hover {
                 postsDiv.innerHTML = '';
                 const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
                 const querySnapshot = await getDocs(q);
-                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
-
                 querySnapshot.forEach((doc) => {
-                    displayPost(doc);
+                    displayPost(doc.id, doc.data());
                 });
-
-                if (querySnapshot.size < 10) {
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                if (querySnapshot.docs.length < 10) {
                     loadMoreButton.style.display = 'none';
                 } else {
                     loadMoreButton.style.display = 'block';
                 }
             }
 
-            loadMoreButton.addEventListener('click', async () => {
+            loadMoreButton.addEventListener('click', async function() {
                 const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
                 const querySnapshot = await getDocs(q);
-                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
-
                 querySnapshot.forEach((doc) => {
-                    displayPost(doc);
+                    displayPost(doc.id, doc.data());
                 });
-
-                if (querySnapshot.size < 10) {
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                if (querySnapshot.docs.length < 10) {
                     loadMoreButton.style.display = 'none';
-                } else {
-                    loadMoreButton.style.display = 'block';
                 }
             });
 
-            // Load more posts when scrolling to the bottom
-            window.onscroll = function() {
-                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                    loadMoreButton.click();
-                }
-            };
+            async function loadReplies(postId) {
+                const repliesDiv = document.getElementById(`replies-${postId}`);
+                repliesDiv.innerHTML = '';
+                const repliesQuery = query(collection(db, 'posts', postId, 'replies'), orderBy('timestamp', 'asc'));
+                const repliesSnapshot = await getDocs(repliesQuery);
+                repliesSnapshot.forEach((replyDoc) => {
+                    const replyData = replyDoc.data();
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = 'reply';
+                    replyDiv.innerHTML = `
+                        <div class="post-header">
+                            <span>${replyData.name}</span>
+                            <span>${new Date(replyData.timestamp.seconds * 1000).toLocaleString()}</span>
+                        </div>
+                        <div>${replyData.comment}</div>
+                        <div class="delete-link" data-id="${replyDoc.id}" data-post-id="${postId}">削除</div>
+                    `;
+                    replyDiv.querySelector('.delete-link').addEventListener('click', deleteReply);
+                    repliesDiv.appendChild(replyDiv);
+                });
+            }
 
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    const userName = userDoc.data().name;
-                    boardPageTitle.innerText = `ログイン名: ${userName}`;
-                    document.getElementById('loginPage').style.display = 'none';
-                    document.getElementById('boardPage').style.display = 'block';
-                    loadPosts();
-                } else {
-                    document.getElementById('loginPage').style.display = 'block';
-                    document.getElementById('boardPage').style.display = 'none';
+            async function deleteReply(event) {
+                const replyId = event.target.getAttribute('data-id');
+                const postId = event.target.getAttribute('data-post-id');
+                await deleteDoc(doc(db, 'posts', postId, 'replies', replyId));
+                loadReplies(postId);
+            }
+
+            async function addReply(event) {
+                const postId = event.target.getAttribute('data-post-id');
+                const replyForm = document.getElementById(`reply-form-${postId}`);
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            }
+
+            async function submitReply(event) {
+                event.preventDefault();
+                const postId = event.target.getAttribute('data-post-id');
+                const replyText = event.target.querySelector('textarea').value;
+                const user = auth.currentUser;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                await addDoc(collection(db, 'posts', postId, 'replies'), {
+                    uid: user.uid,
+                    name: userName,
+                    comment: replyText,
+                    timestamp: serverTimestamp()
+                });
+                loadReplies(postId);
+                event.target.querySelector('textarea').value = '';
+                event.target.style.display = 'none';
+            }
+
+            function displayPost(postId, postData) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const postHeaderDiv = document.createElement('div');
+                postHeaderDiv.className = 'post-header';
+                postHeaderDiv.innerHTML = `
+                    <span>${postData.name || '匿名'}</span>
+                    <span>${new Date(postData.timestamp.seconds * 1000).toLocaleString()}</span>
+                `;
+                postDiv.appendChild(postHeaderDiv);
+
+                const postContentDiv = document.createElement('div');
+                postContentDiv.className = 'post-content';
+                postContentDiv.innerText = postData.comment;
+                postDiv.appendChild(postContentDiv);
+
+                if (postData.fileUrl) {
+                    const fileLink = document.createElement('a');
+                    fileLink.href = postData.fileUrl;
+                    fileLink.target = '_blank';
+                    fileLink.className = 'file-link';
+                    
+                    if (postData.fileType && postData.fileType.startsWith('image/')) {
+                        const postImage = document.createElement('img');
+                        postImage.src = postData.fileUrl;
+                        postImage.style.maxWidth = '200px'; // 縮小表示
+                        postImage.onclick = function() {
+                            const img = document.createElement('img');
+                            img.src = postData.fileUrl;
+                            img.style.width = '100%';
+                            const w = window.open('');
+                            w.document.write(img.outerHTML);
+                        };
+                        fileLink.appendChild(postImage);
+                    } else if (postData.fileType && postData.fileType.startsWith('video/')) {
+                        const postVideo = document.createElement('video');
+                        postVideo.src = postData.fileUrl;
+                        postVideo.controls = true;
+                        fileLink.appendChild(postVideo);
+                    } else {
+                        fileLink.innerText = '添付ファイルを表示';
+                    }
+                    postDiv.appendChild(fileLink);
                 }
-            });
+
+                const replyIcon = document.createElement('span');
+                replyIcon.innerHTML = '💬';
+                replyIcon.className = 'reply-icon';
+                replyIcon.setAttribute('data-post-id', postId);
+                replyIcon.addEventListener('click', addReply);
+		postDiv.appendChild(replyIcon);
+
+                const deleteLink = document.createElement('div');
+                deleteLink.className = 'delete-link';
+                deleteLink.innerText = '削除';
+                deleteLink.addEventListener('click', async function() {
+                    if (postData.uid === auth.currentUser.uid) {
+                        await deleteDoc(doc(db, 'posts', postId));
+                        loadPosts();
+                    } else {
+                        alert('自分の投稿以外は削除できません。');
+                    }
+                });
+                postDiv.appendChild(deleteLink);
+
+                const repliesDiv = document.createElement('div');
+                repliesDiv.className = 'replies';
+                repliesDiv.id = `replies-${postId}`;
+                postDiv.appendChild(repliesDiv);
+
+                const replyForm = document.createElement('form');
+                replyForm.className = 'reply-form';
+                replyForm.id = `reply-form-${postId}`;
+                replyForm.setAttribute('data-post-id', postId);
+                replyForm.innerHTML = `
+                    <textarea></textarea>
+                    <button type="submit">送信</button>
+                `;
+                replyForm.addEventListener('submit', submitReply);
+                postDiv.appendChild(replyForm);
+
+                postsDiv.appendChild(postDiv);
+
+                loadReplies(postId);
+            }
         });
     </script>
 </body>
 </html>
+
