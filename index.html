@@ -222,7 +222,10 @@
         <div id="posts"></div>
         <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
-    
+
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+	
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
