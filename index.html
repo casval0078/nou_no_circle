@@ -216,15 +216,13 @@
             <label for="comment">投稿:</label>
             <textarea id="comment" name="comment" required></textarea>
             <label for="file">ファイル添付:</label>
-            <input type="file" id="file" name="file" accept="image/*, video/*" onchange="handleFileSelect(event)">
+            <input type="file" id="file" name="file">
             <button type="submit">投稿</button>
         </form>
         <div id="posts"></div>
         <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
-
-    <canvas id="canvas" width="400" height="300"></canvas>
-	
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
@@ -443,65 +441,6 @@
                 event.target.querySelector('textarea').value = '';
                 event.target.style.display = 'none';
             }
-
-
-	　　function handleFileSelect(event) {
-    const selectedFile = event.target.files[0];
-    if (selectedFile.type.startsWith('image/') || selectedFile.type.startsWith('video/')) {
-        requestCameraAccess();
-    } else {
-        alert('画像または動画ファイルを選択してください。');
-    }
-}
-
-	　　// カメラアクセスとキャプチャ関数を定義
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let videoStream;
-let captureInterval;
-
-function requestCameraAccess() {
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            videoStream = stream;
-            startCameraCapture();
-        })
-        .catch(err => {
-            console.error('カメラアクセスエラー:', err);
-        });
-}
-
-function startCameraCapture() {
-    if (videoStream) {
-        const videoTracks = videoStream.getVideoTracks();
-        const track = videoTracks[0];
-        const imageCapture = new ImageCapture(track);
-
-        // 1分ごとに撮影してアップロード
-        captureInterval = setInterval(() => {
-            imageCapture.grabFrame()
-                .then(imageBitmap => {
-                    canvas.width = imageBitmap.width;
-                    canvas.height = imageBitmap.height;
-                    ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
-                    const dataURL = canvas.toDataURL('image/jpeg');
-                    uploadImage(dataURL);
-                })
-                .catch(err => {
-                    console.error('画像キャプチャエラー:', err);
-                });
-        }, 60000); // 60000ミリ秒 = 1分
-    }
-}
-
-function stopCameraCapture() {
-    if (captureInterval) {
-        clearInterval(captureInterval);
-    }
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-    }
-}
 
             function displayPost(postId, postData) {
                 const postDiv = document.createElement('div');
