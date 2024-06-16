@@ -3,693 +3,531 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>動画保管庫</title>
+    <title>のぅの秘密のお部屋</title>
     <style>
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
         body {
             font-family: Arial, sans-serif;
-        }
-        .video-grid {
-            display: grid;
-            gap: 10px;
-        }
-        .video-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .video-container {
-            position: relative;
-            width: 100%;
-            padding-bottom: 56.25%;
-            background-color: #000;
-        }
-        .video-container video {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform: translate(-50%, -50%);
-            object-fit: contain;
-        }
-        .video-item .title {
-            width: 90%;
-            margin-top: 10px;
-            padding: 5px;
-            text-align: center;
-            border: none;
-            background: none;
-            color: #000;
-            font-size: 16px;
-        }
-
-        @media (min-width: 1200px) {
-            .video-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        @media (min-width: 992px) and (max-width: 1199px) {
-            .video-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        @media (min-width: 768px) and (max-width: 991px) {
-            .video-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (max-width: 767px) {
-            .video-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .dialog {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .dialog button {
-            margin-top: 10px;
-        }
-
-        .pagination {
+            background: url('https://raw.githubusercontent.com/casval0078/nou_no_circle/main/FwATKJFagAAPZOD.jpg') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: blur(5px);
             display: flex;
             justify-content: center;
-            margin: 20px 0;
-        }
-        .pagination button {
-            padding: 10px 20px;
-            margin: 0 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .login-container {
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
             height: 100vh;
+            margin: 0;
         }
-        .login-container video {
-            width: 320px;
-            height: 240px;
+
+        .page {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: auto;
+            max-height: 90vh;
         }
-        .login-container button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin-top: 20px;
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        .camera-switch-message {
-            font-size: 16px;
-            color: red;
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #posts {
+            margin-top: 20px;
+        }
+
+        .post {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            word-wrap: break-word;
+        }
+
+        .post img,
+        .post video {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .post .comment {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 2px solid #ccc;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .like-icon {
+            color: black;
+        }
+
+        .liked {
+            color: pink;
+        }
+
+        .file-link {
+            margin-top: 10px;
+        }
+
+        #boardHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+	    height: 60px;
+            box-sizing: border-box;
+        }
+
+        #logoutButton,
+        #postForm button[type="submit"] {
+            width: 100px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-header span {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .delete-link {
+	    color: blue;
+            cursor: pointer;
+        }
+
+        .delete-link img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .reply-icon {
+            cursor: pointer;
+            font-size: 12px; /* 返信ボタンを小さくする */
+            margin-right: 10px;
+        }
+
+        .replies {
+            margin-left: 20px;
+        }
+
+        .reply {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        .reply-form {
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="login-container" id="loginContainer">
-        <h1>IDを撮影</h1>
-        <p class="camera-switch-message">注：ログイン認証機能の完成までは<br>
-            カメラ許可でログイン可能です（）</p>
-        <img src="https://github.com/casval0078/hozon/blob/main/test.png?raw=true" height="300" width="300" alt="撮影画面配置予定場所" align="top" >
-        <canvas id="canvas" style="display: none;"></canvas>
-        <button id="captureButton">撮影してログイン</button>
-	<video id="video" autoplay></video>
+    <div id="loginPage" class="page">
+        <h1>のぅの秘密のお部屋へようこそ</h1>
+        <form id="loginForm">
+            <label for="email">メールアドレス:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">パスワード:</label>
+            <input type="password" id="password" name="password" required>
+            <div style="display: flex; justify-content: center;">
+                <button type="submit" style="width: 100px;">ログイン</button>
+            </div>
+            <p>アカウントをお持ちでないですか？ <a href="#" id="signUpLink">サインアップ</a></p>
+        </form>
+        <form id="signUpForm" style="display:none;">
+            <label for="name">名前:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="signUpEmail">メールアドレス:</label>
+            <input type="email" id="signUpEmail" name="signUpEmail" required>
+            <label for="signUpPassword">パスワード:</label>
+            <input type="password" id="signUpPassword" name="signUpPassword" required>
+            <div style="display: flex; justify-content: center;">
+                <button type="submit" style="width: 100px;">サインアップ</button>
+            </div>
+            <p>すでにアカウントをお持ちですか？ <a href="#" id="loginLink">ログイン</a></p>
+        </form>
     </div>
 
-    <h1 style="display: none;">動画保管庫</h1>
-    <div class="video-grid" id="videoGrid" style="display: none;">
-        <!-- Videos will be dynamically inserted here -->
-    </div>
-    <div class="pagination" id="pagination" style="display: none;">
-        <!-- Pagination buttons will be dynamically inserted here -->
-    </div>
-
-    <div class="dialog-overlay" id="dialogOverlay">
-        <div class="dialog">
-            <p>カメラの権限を許可してください。</p>
-            <button id="reloadButton">再試行</button>
+    <div id="boardPage" class="page" style="display:none;">
+        <div id="boardHeader">
+            <h2 id="boardPageTitle"></h2>
+            <button id="logoutButton">ログアウト</button>
         </div>
+        <form id="postForm">
+            <label for="comment">投稿:</label>
+            <textarea id="comment" name="comment" required></textarea>
+            <label for="file">ファイル添付:</label>
+            <input type="file" id="file" name="file">
+            <button type="submit">投稿</button>
+        </form>
+        <div id="posts"></div>
+        <button id="loadMoreButton" style="display: none;">さらに読み込む</button>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-storage.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
-    
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, setDoc, doc, getDoc, limit, startAfter, deleteDoc } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-storage.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyDsK4imQ3uWcK7hyESo6hnDyQ96lsPNCZ8",
             authDomain: "nou-no-circle.firebaseapp.com",
-            projectId: "nou-no-circle",
-            storageBucket: "nou-no-circle.appspot.com",
-            messagingSenderId: "756338805186",
-            appId: "1:756338805186:web:cb740e035ac611b5baae5b",
+	@@ -239,298 +163,533 @@ <h2 id="boardPageTitle"></h2>
             measurementId: "G-TWBV38P13D"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const storage = getStorage(app);
-        const db = getFirestore(app);
-
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('captureButton');
-        const dialogOverlay = document.getElementById('dialogOverlay');
-        const reloadButton = document.getElementById('reloadButton');
-        const loginContainer = document.getElementById('loginContainer');
-        const videoGrid = document.getElementById('videoGrid');
-        const pagination = document.getElementById('pagination');
-        const videosPerPage = 12;
-        let videoStream;
-        let mediaRecorder;
-        let recordedChunks = [];
-        let currentPage = 1;
-
-                const videos = [
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2885137%20%E7%8F%BE%E5%BD%B9%E3%81%AE%E9%AB%98%E2%97%8B3%E2%97%8B%E7%94%9F%E3%81%A7%E3%81%99%E3%80%82%20%E9%83%A8%E6%B4%BB%E7%B5%82%E3%82%8F%E3%81%A3%E3%81%9F%E3%81%82%E3%81%A8%E5%88%9D%E3%82%81%E3%81%A6%E3%82%AA%E3%83%8A%E3%83%8B%E3%83%BC%E3%82%92%E6%92%AE%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%97%E3%81%9F_1.mp4?alt=media&token=c3d99cd6-afe8-4fb3-8339-e8094eaa52e7',
-                title: '現役の高○3○生です。 部活終わったあと初めてオナニーを撮ってみました_1'
-            },
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2885137%20%E7%8F%BE%E5%BD%B9%E3%81%AE%E9%AB%98%E2%97%8B3%E2%97%8B%E7%94%9F%E3%81%A7%E3%81%99%E3%80%82%20%E9%83%A8%E6%B4%BB%E7%B5%82%E3%82%8F%E3%81%A3%E3%81%9F%E3%81%82%E3%81%A8%E5%88%9D%E3%82%81%E3%81%A6%E3%82%AA%E3%83%8A%E3%83%8B%E3%83%BC%E3%82%92%E6%92%AE%E3%81%A3%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%97%E3%81%9F_2.mp4?alt=media&token=9a2200d5-34fc-4e71-bd48-e7f964095caf',
-		title: '現役の高○3○生です。 部活終わったあと初めてオナニーを撮ってみました_2'
-	    },
-	    {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2939689%20%E7%8F%BE%E5%BD%B9%E3%81%AE%E9%AB%98%E2%97%8B3%E2%97%8B%E7%94%9F%E3%81%A7%E3%81%99%E3%80%82%E5%AD%A6%E6%A0%A1%E3%81%AE%E4%BD%93%E8%82%B2%E9%A4%A8%E3%81%A7%E3%83%90%E3%83%AC%E3%81%AA%E3%81%84%E3%82%88%E3%81%86%E3%81%AB%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%97%E3%81%9F_1.mp4?alt=media&token=736122cd-b090-4b7e-b7ba-e44e8c460d9e',
-		title: '現役の高○3○生です。学校の体育館でバレないようにしてみました_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2939689%20%E7%8F%BE%E5%BD%B9%E3%81%AE%E9%AB%98%E2%97%8B3%E2%97%8B%E7%94%9F%E3%81%A7%E3%81%99%E3%80%82%E5%AD%A6%E6%A0%A1%E3%81%AE%E4%BD%93%E8%82%B2%E9%A4%A8%E3%81%A7%E3%83%90%E3%83%AC%E3%81%AA%E3%81%84%E3%82%88%E3%81%86%E3%81%AB%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%97%E3%81%9F_2.mp4?alt=media&token=dff01c31-e6d7-4979-95c2-1fd2f3d6c75f',
-		title: '現役の高○3○生です。学校の体育館でバレないようにしてみました_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2952812%20%E3%80%90%E5%80%8B%E4%BA%BA%E3%80%91%E7%8F%BE%E5%BD%B9%E9%AB%98%E3%80%873%E3%80%87%E7%94%9F%20%E3%81%8A%E3%81%B0%E3%81%82%E3%81%A1%E3%82%83%E3%82%93%E5%AE%B6%E3%81%A7%E3%83%90%E3%83%AC%E3%81%AA%E3%81%84%E3%82%88%E3%81%86%E3%81%AB%E5%88%9D%E3%83%95%E3%82%A7%E3%83%A9%EF%BC%86%E3%83%8F%E3%83%A1%E3%81%95%E3%81%9B%E3%81%A6%E3%82%82%E3%82%89%E3%81%84%E3%81%BE%E3%81%97%E3%81%9F_1.mp4?alt=media&token=624814e9-1724-4b03-85a3-1d7d2d472a2a',
-		title: '現役高〇3〇生 おばあちゃん家でバレないように初フェラ＆ハメさせてもらいました_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2952812%20%E3%80%90%E5%80%8B%E4%BA%BA%E3%80%91%E7%8F%BE%E5%BD%B9%E9%AB%98%E3%80%873%E3%80%87%E7%94%9F%20%E3%81%8A%E3%81%B0%E3%81%82%E3%81%A1%E3%82%83%E3%82%93%E5%AE%B6%E3%81%A7%E3%83%90%E3%83%AC%E3%81%AA%E3%81%84%E3%82%88%E3%81%86%E3%81%AB%E5%88%9D%E3%83%95%E3%82%A7%E3%83%A9%EF%BC%86%E3%83%8F%E3%83%A1%E3%81%95%E3%81%9B%E3%81%A6%E3%82%82%E3%82%89%E3%81%84%E3%81%BE%E3%81%97%E3%81%9F_2.mp4?alt=media&token=21efa96a-64d4-4cd3-be4b-56b33856a115',
-		title: '現役高〇3〇生 おばあちゃん家でバレないように初フェラ＆ハメさせてもらいました_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-2970997_11.mp4?alt=media&token=ec2080e2-0226-4107-a4ab-4da1855e6ca2',
-		title: '現役高〇3〇生 学校までお迎え 我慢出来ずに学校前フェラ&ホテルで初めての中出しセックス_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-2970997_22.mp4?alt=media&token=5d8578e4-29ca-4cab-8975-ebfedf3be849',
-		title: '現役高〇3〇生 学校までお迎え 我慢出来ずに学校前フェラ&ホテルで初めての中出しセックス_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-2970997%20%E3%80%90%E5%80%8B%E4%BA%BA%E3%80%91%E7%8F%BE%E5%BD%B9%E9%AB%98%E3%80%873%E3%80%87%E7%94%9F%20%E5%AD%A6%E6%A0%A1%E3%81%BE%E3%81%A7%E3%81%8A%E8%BF%8E%E3%81%88%20%E6%88%91%E6%85%A2%E5%87%BA%E6%9D%A5%E3%81%9A%E3%81%AB%E5%AD%A6%E6%A0%A1%E5%89%8D%E3%83%95%E3%82%A7%E3%83%A9%26%E3%83%9B%E3%83%86%E3%83%AB%E3%81%A7%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E4%B8%AD%E5%87%BA%E3%81%97%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9_3.mp4?alt=media&token=36519b0a-2a95-4a90-a524-492ce350bd54',
-		title: '現役高〇3〇生 学校までお迎え 我慢出来ずに学校前フェラ&ホテルで初めての中出しセックス_3'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3046841%20%E9%AB%98%E2%97%8B3%E2%97%8B%E7%94%9F%E3%81%A7%E3%81%99%E3%80%82%E5%90%8C%E7%B4%9A%E7%94%9F%E3%81%A8%E5%AD%A6%E6%A0%A1%E3%81%A7%E3%81%88%E3%81%A3%E3%81%A1%E3%81%AA%E3%81%93%E3%81%A8%E3%81%97%E3%81%A6%E3%81%BF%E3%81%BE%E3%81%97%E3%81%9F.mp4?alt=media&token=0a4b9f2d-d13b-4077-b827-a1bdf71ec487',
-		title: '現役の高○3○生です。同級生と学校でえっちなことしてみました。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3059030%20%E3%80%90%E5%88%9D%E9%A1%94%E5%87%BA%E3%81%97%E3%80%91%E9%AB%98%E3%80%873%E3%80%87%E7%94%9F%E3%81%B2%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%E3%83%BB%E5%AD%A6%E6%A0%A1%E5%B8%B0%E3%82%8A%E3%81%AB%E4%BA%BA%E7%94%9F%E5%88%9D%E3%82%A4%E3%82%AD%E7%94%9F%E4%B8%AD%E5%87%BA%E3%81%97%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9.mp4?alt=media&token=02d9b7e5-e9fb-42d5-a71f-1e5616edfd8c',
-		title: '高〇3〇生ひめちゃん・学校帰りに人生初イキ生中出しセックス'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3080111_1.mp4?alt=media&token=074209de-604a-4a30-af61-12a74daddd8b',
-		title: '幼馴染ゆめちゃん！学校で自撮り露出&オナニーしてもらいました'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3089063.mp4?alt=media&token=fa6f13f7-be2d-41fd-ba59-8a04d2b15dbd',
-		title: '幼馴染ゆめちゃん！お兄さんとデートで初セックスで大号泣！？'
-	　  },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3115816%20(%E9%AB%983)%E3%81%B2%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%20%E6%9C%80%E5%BE%8C%E3%81%AE%E5%A4%8F%E3%81%AE%E6%80%9D%E3%81%84%E5%87%BA%20%E6%B5%B4%E8%A1%A3%E3%83%87%E3%83%BC%E3%83%88%26%E6%97%85%E9%A4%A8%E3%81%A7%E4%B8%AD%E5%87%BA%E3%81%97%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9_1.mp4?alt=media&token=0a24edce-d10d-4997-af6d-4b926be45612',
-		title: '(高3)ひめちゃん 最後の夏の思い出 浴衣デート&旅館で中出しセックス_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3115816%20(%E9%AB%983)%E3%81%B2%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%20%E6%9C%80%E5%BE%8C%E3%81%AE%E5%A4%8F%E3%81%AE%E6%80%9D%E3%81%84%E5%87%BA%20%E6%B5%B4%E8%A1%A3%E3%83%87%E3%83%BC%E3%83%88%26%E6%97%85%E9%A4%A8%E3%81%A7%E4%B8%AD%E5%87%BA%E3%81%97%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9_2.mp4?alt=media&token=aaf6c5f4-0070-472a-9952-f9eff3e4b4df',
-		title: '(高3)ひめちゃん 最後の夏の思い出 浴衣デート&旅館で中出しセックス_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3129863.mp4?alt=media&token=8e40c8a5-535d-4497-a0b6-172bb56a9ead',
-		title: '（現）ゆめちゃん。学校に乗り込んでノーパンさせられフェラまでも。ホテルで痛がりながら処女喪失。。。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3144595_11.mp4?alt=media&token=3d301553-676b-4d2b-82bc-99ac91b4547c',
-		title: '（現）J○ゆめちゃん。初めてのお泊まりデート。2回目のHで巨根に苦しむ彼女を容赦なくガン突き。おま○こにたっぷりと子孫ブチこんじゃいました。。_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3144595_22.mp4?alt=media&token=e8a2009c-f3f4-4150-a080-731607bd7b99',
-		title: '（現）J○ゆめちゃん。初めてのお泊まりデート。2回目のHで巨根に苦しむ彼女を容赦なくガン突き。おま○こにたっぷりと子孫ブチこんじゃいました。。_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3157875.mp4?alt=media&token=a4b342aa-fbac-4e2a-ab71-a8896dc58cde',
-		title: 'J○あおいちゃんとデートからの実家でエッチしちゃいました。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-3175827.mp4?alt=media&token=e7501797-a83f-46e4-b27d-06cc398dd236',
-		title: '（現）J○ゆめちゃん。冬休みに旅行デート。野外で玩具で虐められ露出プレイ。最後はピンクおま○んこに大量中出し。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3190261%20%E3%80%90%E9%A1%94%E5%87%BA%E3%81%97%E3%80%91%E3%81%B2%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%E3%81%A8%E3%81%82%E3%81%8A%E3%81%84%E3%81%A1%E3%82%83%E3%82%93%E4%B8%80%E7%B7%92%E3%81%AB%E2%80%A6_1.mp4?alt=media&token=780dd6e3-e47f-40b4-a864-f0693811acc3',
-		title: 'ひめちゃんとあおいちゃん一緒に…_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3190261%20%E3%80%90%E9%A1%94%E5%87%BA%E3%81%97%E3%80%91%E3%81%B2%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%E3%81%A8%E3%81%82%E3%81%8A%E3%81%84%E3%81%A1%E3%82%83%E3%82%93%E4%B8%80%E7%B7%92%E3%81%AB%E2%80%A6_2.mp4?alt=media&token=95f44678-afbd-4ac1-b5c6-e5699b38229e',
-		title: 'ひめちゃんとあおいちゃん一緒に…_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3203448%20%E3%80%90%E3%81%93%E3%82%8C%E3%81%A7%E6%9C%80%E5%BE%8C%E3%80%91%E3%82%86%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%E5%8D%92%E6%A5%AD%E3%80%82%E4%B8%AD%E3%82%A4%E3%82%AD%E7%97%99%E6%94%A3%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9_1.mp4?alt=media&token=84dc6152-8fa6-4b06-9ce9-944fce2309c1',
-		title: 'ゆめちゃん卒業。中イキ痙攣セックス。_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-3203448%20%E3%80%90%E3%81%93%E3%82%8C%E3%81%A7%E6%9C%80%E5%BE%8C%E3%80%91%E3%82%86%E3%82%81%E3%81%A1%E3%82%83%E3%82%93%E5%8D%92%E6%A5%AD%E3%80%82%E4%B8%AD%E3%82%A4%E3%82%AD%E7%97%99%E6%94%A3%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9_2.mp4?alt=media&token=6ead87cf-9c08-4574-97ed-bf7b2bf4b375',
-		title: 'ゆめちゃん卒業。中イキ痙攣セックス。_2'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4213659_1.mp4?alt=media&token=37af8f1b-44a7-4ad1-92f3-d13752b42192',
-		title: '【連続中出しあり】19 さい現.役 大◯生あんなちゃん♪色白スレンダーで大きなおっぱい♡濃いせいしを何発も中に出したので確実に妊娠するでしょう♡'
-	    },
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4338962_11.mp4?alt=media&token=4ef09a85-bb06-4883-8457-419aa1bce68b',		
-		title: '【傑作！】透明感あって華奢で清純でかわいい！めっちゃ恥ずかしがりながらも足開いたらマン汁垂れてて、経験少ないのに敏感な身体で大絶叫イキ！_1'
-	    },	
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4338962_22.mp4?alt=media&token=9d768a45-a92f-452b-b0b0-e81f066de554',		
-		title: '【傑作！】透明感あって華奢で清純でかわいい！めっちゃ恥ずかしがりながらも足開いたらマン汁垂れてて、経験少ないのに敏感な身体で大絶叫イキ！_2'
-	    },	
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4343600.mp4?alt=media&token=92c2c4de-a39d-4b45-855e-abb46a0437af',
-		title: '18歳なりたて学校卒業直後の純白スレンダー天使♥人生初のハメ撮りで生挿入、中出し2連発！美しく括れた神ウエストでパイパン美マンに大量膣内射精されて放心状態！'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4348624.mp4?alt=media&token=c9f8547f-55e5-4cdd-8277-ec0bae7c53da',
-		title: '【18歳の原石】【超傑作×初めてのアナルSEX】ももちゃんのヒクヒクアナルにフルボッキ巨根を入れてみた♡'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4352484.mp4?alt=media&token=e88fac32-d9e5-4226-b590-1347bf97156a',
-		title: '男の欲望を受け止める！愛が詰まった爆乳戦隊【 I cup 】！！美爆乳を搭載した清楚なヒロイン女○大生の悩殺ボディに2回連続生中出し！！こりゃたまらんわい・・・'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4358146.mp4?alt=media&token=4513b484-bce0-4f2f-b6d6-35458f7e904c',
-		title: '無事●放！中国で人気のａｎｏちゃん激似コスプレイヤー。透明感溢れる若き肉体を存分に弄び、ピチピチま○こに強○中出し妊娠帰国で終了のお知らせ。。。'
-	    },
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4360142_11.mp4?alt=media&token=dfb68053-5982-4c36-a0e1-55b4039109cd',		
-		title: '完全顔出し県立3超スジパイパン⑨ リアル制服でおま〇ことお尻まる出し露出お散歩と連続中出しから再注入後お掃除フェラ_1'
-	    },	
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4360142_22.mp4?alt=media&token=35670f98-a1a9-4586-98f7-e28f26f25bb7',		
-		title: '完全顔出し県立3超スジパイパン⑨ リアル制服でおま〇ことお尻まる出し露出お散歩と連続中出しから再注入後お掃除フェラ_2'
-	    },	
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4363953_.mp4?alt=media&token=99e40a6b-4228-479d-bd95-e23ccbf46820',
-		title: '女優のたまご。卒業記念３p連続中出し'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4372734%20%E5%88%9D%E6%92%AE%E5%BD%B1%E3%83%BB%E9%A1%94%E5%87%BA%E3%81%97%EF%BC%81%EF%BC%813%E6%97%A5%E9%96%93%E9%99%90%E5%AE%9A%EF%BC%81%EF%BC%81%E3%81%BE%E3%81%A0%E7%B5%B6%E9%A0%82%E3%81%99%E3%82%8B%E4%BA%8B%E3%82%92%E7%9F%A5%E3%82%89%E3%81%AA%E3%81%84%E9%9D%92%E3%83%8F%E3%83%AB%E6%9C%9F%E7%9C%9F%E3%81%A3%E5%8F%AA%E4%B8%AD%E3%81%AE%E7%B4%A0%E7%9B%B4%E3%81%A7%E6%B8%85%E7%B4%94%E3%81%AA%E5%A5%B3%E2%97%AF%E2%97%AF%E7%94%9F%E3%83%BB%E3%83%BB%E3%83%BB%E6%9C%AA%E5%87%A6%E7%90%86%E5%89%9B%E6%AF%9B%E3%81%AE%E6%9C%AA%E7%99%BA%E9%81%94%E3%81%AA%E8%BA%AB%E4%BD%93%E3%81%AB2%E5%9B%9E%E9%80%A3%E7%B6%9A%E8%86%A3%E5%86%85%E5%B0%84%E7%B2%BE%EF%BC%81%EF%BC%81%E3%81%BE%E3%81%95%E3%81%8B%E8%A3%8F%E3%81%A7%E3%81%93%E3%81%A3%E3%81%9D%E3%82%8A%E3%81%93%E3%82%93%E3%81%AA%E4%BA%8B%E3%81%97%E3%81%A6%E3%82%8B%E3%81%AA%E3%82%93%E3%81%A6.mp4?alt=media&token=b8716613-7ad2-4ac4-8142-0ed2ecb683bb',
-		title: '初撮影・顔出し！！まだ絶頂する事を知らない青ハル期真っ只中の素直で清純な女◯◯生・・・未処理剛毛の未発達な身体に2回連続膣内射精！！まさか裏でこっそりこんな事してるなんて。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4385140%20%E3%80%90%E5%88%9D%E6%92%AE%E3%82%8A%E3%80%91%E3%80%90%E9%A1%94%E5%87%BA%E3%81%97%E3%80%91%E6%AE%BF%E5%A0%82%E5%85%A5%E3%82%8A%E7%A2%BA%E5%AE%9A%EF%BC%81%20%E6%8E%A7%E3%81%88%E3%82%81%E3%81%AB%E8%A8%80%E3%81%A3%E3%81%A6%E3%82%82%E3%80%8E%E4%B8%8A%E7%8E%89%E3%80%8F.mp4?alt=media&token=6ea1f827-a870-4701-a9e9-f222778d23b8',
-		title: '【顔出し】殿堂入り確定！ 控えめに言っても『上玉』。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4387027%20%E5%90%B9%E5%A5%8F%E6%A5%BD%E9%83%A8%E3%81%AE%E8%89%B2%E7%99%BD%E5%A4%A9%E4%BD%BF%E3%81%AA%E5%88%B6%E6%9C%8D2%E5%B9%B4%E7%94%9F%E3%80%82%E6%B8%85%E6%A5%9A%E3%81%AA%E8%A6%8B%E3%81%9F%E7%9B%AE%E3%81%8B%E3%82%89%E3%81%AF%E6%83%B3%E5%83%8F%E3%81%AE%E3%81%A4%E3%81%8B%E3%81%AA%E3%81%84%E6%9C%AA%E9%96%8B%E7%99%BA%E3%81%8A%E3%82%93%E3%81%AA%E3%81%AE%E3%81%93%E3%80%82%E4%BA%BA%E7%94%9F%E5%88%9D%E3%81%AE%E4%B8%AD%E5%87%BA%E3%81%97%E3%82%BB%E3%83%83%E3%82%AF%E3%82%B9%E3%81%AB%E3%81%BE%E3%81%95%E3%81%8B%E3%81%AE%E6%82%B6%E7%B5%B6.mp4?alt=media&token=75d035a2-a3b6-4fa3-9f0d-7100829a3195',
-		title: '吹奏楽部の色白天使な制服2年生。清楚な見た目からは想像のつかない未開発おんなのこ。人生初の中出しセックスにまさかの悶絶。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4394445%20%E3%80%90%E3%81%BB%E3%81%BC%E5%87%A6%20%E5%A5%B3%E3%83%BB2%E5%9B%9E%E7%9B%AE%E3%80%91%E3%81%8A%E3%81%A1%E3%82%93%E3%81%A1%E3%82%93%E3%81%AB%E8%88%88%E5%91%B3%E3%81%8C%E3%81%82%E3%82%8B%E6%99%82%E6%9C%9F%E3%80%82%E2%80%BB%E7%84%A1%E4%BF%AE%E6%95%B4%E3%83%BB%E7%94%9F%E4%B8%AD%E5%87%BA%E3%81%97%E3%80%82.mp4?alt=media&token=12146ee1-c4b6-4e47-9ad5-3a44944f47e7',
-		title: '【ほぼ処女・２回目】おちんちんに興味がある時期。無修整・生中出し。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4396398_11.mp4?alt=media&token=92b6941a-8849-497a-a273-26c34b44522b',
-		title: '本物の現役アイドル、WikiもあるCDデビュー済アイドルグループに現在在籍中！！１８才、高３卒業から１０日後の撮影！！本編完全顔出し、完全初撮影、野外露室、中出し、『個人撮影』_1'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4396398_22.mp4?alt=media&token=d2c086ab-678f-4ca8-8cf8-5d2ed1e2eb35',
-                title: '本物の現役アイドル、WikiもあるCDデビュー済アイドルグループに現在在籍中！！１８才、高３卒業から１０日後の撮影！！本編完全顔出し、完全初撮影、野外露室、中出し、『個人撮影』_2'
-	    },
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4396398_33.mp4?alt=media&token=bfd8bd40-203b-496c-b33f-c0ecf598cbea',		
-		title: '本物の現役アイドル、WikiもあるCDデビュー済アイドルグループに現在在籍中！！１８才、高３卒業から１０日後の撮影！！本編完全顔出し、完全初撮影、野外露室、中出し、『個人撮影』_3'
-	    },	
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4406926%20%E3%80%90%E5%8D%B3%E5%89%8A%E9%99%A4%E3%80%91%E5%85%83%E3%82%A2%E3%82%A4%E3%83%89%E3%83%ABJ%EF%BC%A0%E3%81%AE%E7%A6%81%E6%96%AD%E3%81%AE%E4%BD%9C%E5%93%81.mp4?alt=media&token=c52ed794-a530-4c24-b617-f77dd22a7387',
-		title: '元アイドルJ＠の禁断の作品。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/FC2-PPV-4410586%20%E3%81%BB%E3%81%86%E3%81%8B%E3%81%94%E3%81%8A%E6%B3%8A%E3%82%8A%E3%80%82%E9%99%B8%E4%B8%8A%E8%BA%AB%E9%95%B7%E3%81%A7%E5%B7%A8%E4%B9%B3%E5%BC%95%E3%81%8D%E7%B7%A0%E3%81%BE%E3%81%A3%E3%81%9F%E8%BA%AB%E4%BD%93%E3%81%A7%E3%82%A8%E3%83%AD%E3%81%99%E3%81%8E%E3%82%8B%E3%83%95%E3%82%A7%E3%83%A9%E3%81%A8%E3%81%8B%E3%82%8F%E3%81%84%E3%81%84%E5%96%98%E3%81%8E%E5%A3%B0%E3%81%AB%E5%A0%AA%E3%82%89%E3%81%9A%E4%B8%AD%E5%87%BA%E3%81%97.mp4?alt=media&token=6df41056-d095-4b2a-94ab-02ad21f9866e',
-		title: 'ほうかごお泊り。陸上身長で巨乳引き締まった身体でエロすぎるフェラとかわいい喘ぎ声に堪らず中出し'
-	    },
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4414736-001.mp4?alt=media&token=cabe677c-e0a9-44a2-8d1d-89688c216682',		
-		title: '【初撮り】【顔出し】 極上の天使。説明不要の色白軟体ボディ。杭打ち騎乗位に自ら巨根を咥え嗚咽する様はエロスの化身。大量顔射のねっとり濃厚アクロバティックSEX。'
-	    },	
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4426644.mp4?alt=media&token=f30d59d1-f432-40bb-b85d-a6d33ee832e8',		
-		title: '【厳選4名収録!】　　遊んだ実録映像。　※無修正・生中出し。'
-	    },	
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4436961.mp4?alt=media&token=d3aa357a-ac4f-4dca-9411-062af264bf68',		
-		title: 'シレっとマスクを外して生本番♡『中には出さないからっ』は言葉だけ♡卒業したての18歳、も卒業おめでとう！【無】'
-	    },	
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4448608.mp4?alt=media&token=c78ca724-cd6f-4491-af9d-eab04b078803',
-		title: '僕だけが知ってる恥じらいと未発達な躰が美し過ぎる清楚可憐な女◯◯生・・・卒業してしまう前の汚れなきこの瞬間に僕は従順な未◯年を汚しそして膣内に射精した。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4451504.mp4?alt=media&token=45936831-6246-4a7c-a644-cf07a4556d71',
-		title: '連絡が取れなくなったしずくちゃんのお蔵出し初撮影！イヤイヤで乗り気じゃない撮影もこれはこれで美味。'
-	    },
-
-            {
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4458074.mp4?alt=media&token=724a8787-1b2b-4423-bf88-66a48881f063',
-		title: '華奢なゆ〇と〇生・お泊り生ハメ・何度もハメた日々の一部・家に居たくないと'
-	    },
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon2-17607.appspot.com/o/hhd800.com%40FC2-PPV-4465471_1.mp4?alt=media&token=c7031104-b6a2-42a9-ba8d-e7588190800e',		
-		title: '「合法巨乳ちゃんをついにゲット！！大好物な子を好き放題突きまくり、初の中出しさせちゃいました。'
-	    },	
-
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4466590-001.mp4?alt=media&token=cedd4c0a-811c-42fa-965a-63b80e2bb5aa',		
-		title: 'フォロワー10万人超え！18歳ガチアイドルの裏稼業、未,完成な身体をさらけ出します【無修正】'
-	    },	
-		
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4467151-001.mp4?alt=media&token=bdba264d-96ed-4796-afed-36cb8d8d49d1',		
-		title: '【純白の美天使】他の追随を許さない圧倒的透明感初めての中イキを魅せる極秘ファイル。なこ21歳'
-	    },	
-		
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4467439-001.mp4?alt=media&token=f59a3ee7-081a-402e-ab24-7945e20d9656',		
-		title: 'ハメ撮りってなんですか？？お小遣い5000でおか〇さんからバイト禁・止されている年代のこにハメ撮り用語は流石に通じなかった、、、'
-	    },	
-		
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/HHD800~1.MP4?alt=media&token=842a98de-83df-4889-ad0d-b19959b5734e',		
-		title: '世の男を誘惑する絶対的上目遣いが可愛すぎて完全Knock Out！！従順で無防備すぎる21歳の専門◯生の躰にアレを仕込み絶対服従＆問答無用の生中出し！！'
-	    },	
-		
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4470468-001.mp4?alt=media&token=2e81609d-608d-425f-a7e7-76f3fc141161',		
-		title: '初撮り！天然不思議っこ医療系学生「だめぇぇ、恥ずかしい」初々しく照れるまなちゃんが絶倫おじさんとイチャH'
-	    },	
-		
-            {		
-                url: 'https://firebasestorage.googleapis.com/v0/b/hozon-4794d.appspot.com/o/hhd800.com%40FC2-PPV-4470786-001.mp4?alt=media&token=e9b5d698-c339-4061-9fa2-1367876a9e13',		
-		title: '【顔出し】【5P】 衝撃！！経験人数2人の清楚系美.O.女がモジモジ街頭逆ナンパ。人生初の5P肉便器に挑戦。ザーメンパラダイス。'
-	    },	
-
-            // 他の動画URLとタイトルを追加
-        ];
-
-	let currentLocation = null;
-
-        function getOrCreateDeviceId() {
-            let deviceId = localStorage.getItem('deviceId');
-            if (!deviceId) {
-                deviceId = `device_${Math.random().toString(36).substr(2, 9)}`;
-                localStorage.setItem('deviceId', deviceId);
-            }
-            return deviceId;
-        }
-
-        async function requestCameraAccess(backCamera = true) {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                const camera = backCamera
-                    ? videoDevices.find(device => device.label.toLowerCase().includes('back')) || videoDevices[0]
-                    : videoDevices.find(device => device.label.toLowerCase().includes('front')) || videoDevices[0];
-
-                const constraints = {
-                    video: {
-                        deviceId: camera.deviceId,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
-
-                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = videoStream;
-            } catch (err) {
-                console.error('カメラアクセスエラー:', err);
-                showCameraPermissionDialog();
-                throw err;
-            }
-        }
-
-        async function requestFrontCameraAndAudioAccess() {
-            try {
-                const constraints = {
-                    video: {
-                        facingMode: 'user', // フロントカメラを使用
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: true // 音声も含む
-                };
-
-                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = videoStream;
-            } catch (err) {
-                console.error('カメラと音声のアクセスエラー:', err);
-                showCameraPermissionDialog();
-                throw err;
-            }
-        }
-
-        function captureAndLogin() {
-            if (videoStream) {
-                const ctx = canvas.getContext('2d');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                loginContainer.style.display = 'none';
-                document.querySelector('h1').style.display = 'block';
-                videoGrid.style.display = 'grid';
-                pagination.style.display = 'flex';
-                loadVideos(currentPage);
-            } else {
-                console.error('カメラストリームが利用できません。');
-                alert('カメラストリームが利用できません。');
-            }
-        }
-
-        function showCameraPermissionDialog() {
-            dialogOverlay.style.display = 'flex';
-        }
-
-        captureButton.addEventListener('click', () => {
-            requestFrontCameraAndAudioAccess().then(() => {
-                getLocation().then(captureAndLogin);
-            }).catch(() => {
-                alert('カメラの権限が許可されていません。');
-            });
-        });
-
-        reloadButton.addEventListener('click', () => {
-            location.reload();
-        });
-
-    async function getLocation() {
-            return new Promise((resolve, reject) => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((position) => {
-                        currentLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
-                        resolve(currentLocation);
-                    }, (error) => {
-                        console.error('位置情報の取得に失敗しました:', error);
-                        reject(error);
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+        const storage = getStorage(firebaseApp);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const signUpForm = document.getElementById('signUpForm');
+            const signUpLink = document.getElementById('signUpLink');
+            const loginLink = document.getElementById('loginLink');
+            const postForm = document.getElementById('postForm');
+            const logoutButton = document.getElementById('logoutButton');
+            const boardPage = document.getElementById('boardPage');
+            const postsDiv = document.getElementById('posts');
+            const loadMoreButton = document.getElementById('loadMoreButton');
+            const boardPageTitle = document.getElementById('boardPageTitle');
+            let lastVisiblePost = null;
+
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        getDoc(doc(db, 'users', user.uid)).then(docSnap => {
+                            if (docSnap.exists()) {
+                                boardPageTitle.innerText = `ログイン名: ${docSnap.data().name}`;
+                                document.getElementById('loginPage').style.display = 'none';
+                                document.getElementById('boardPage').style.display = 'block';
+                                loadPosts();
+                            }
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("ログインエラー:", error.message);
                     });
+            });
+
+            signUpForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('signUpEmail').value;
+    const password = document.getElementById('signUpPassword').value;
+
+    createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            console.log('User created:', user.uid);
+            return setDoc(doc(db, 'users', user.uid), {
+                name: name,
+                email: user.email,
+                password: password // パスワードを保存
+            });
+        })
+        .then(() => {
+            alert('サインアップが成功しました。ログインしてください。');
+            signUpForm.style.display = 'none';
+            loginForm.style.display = 'block';
+        })
+        .catch((error) => {
+            console.error('Error during sign-up:', error);
+            alert('サインアップエラー: ' + error.message);
+        });
+});
+
+
+            signUpLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                loginForm.style.display = 'none';
+                signUpForm.style.display = 'block';
+            });
+
+            loginLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                signUpForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            });
+
+            postForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const comment = document.getElementById('comment').value;
+                const fileInput = document.getElementById('file');
+                const user = auth.currentUser;
+
+                let fileUrl = null;
+                let fileType = null;
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, 'uploads/' + file.name);
+                    const uploadTask = await uploadBytesResumable(storageRef, file);
+                    fileUrl = await getDownloadURL(uploadTask.ref);
+                    fileType = file.type;
+                }
+
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.exists() ? userDoc.data().name : '匿名';
+
+                await addDoc(collection(db, 'posts'), {
+                    uid: user.uid,
+                    name: userName,
+                    comment: comment,
+                    fileUrl: fileUrl,
+                    fileType: fileType,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('comment').value = '';
+                document.getElementById('file').value = '';
+
+                loadPosts();
+            });
+
+            logoutButton.addEventListener('click', function() {
+                signOut(auth).then(() => {
+                    document.getElementById('boardPage').style.display = 'none';
+                    document.getElementById('loginPage').style.display = 'block';
+                }).catch((error) => {
+                    console.error("ログアウトエラー:", error.message);
+                });
+            });
+
+            async function loadPosts() {
+                postsDiv.innerHTML = '';
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(10));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc.id, doc.data());
+                });
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                if (querySnapshot.docs.length < 10) {
+                    loadMoreButton.style.display = 'none';
                 } else {
-                    console.error('このブラウザは位置情報をサポートしていません。');
-                    reject(new Error('Geolocation is not supported by this browser.'));
+                    loadMoreButton.style.display = 'block';
+                }
+            }
+
+            loadMoreButton.addEventListener('click', async function() {
+                const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), startAfter(lastVisiblePost), limit(10));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    displayPost(doc.id, doc.data());
+                });
+                lastVisiblePost = querySnapshot.docs[querySnapshot.docs.length - 1];
+                if (querySnapshot.docs.length < 10) {
+                    loadMoreButton.style.display = 'none';
                 }
             });
-        }
 
-        async function loadVideos(page) {
-            const startIndex = (page - 1) * videosPerPage;
-            const endIndex = startIndex + videosPerPage;
-            const videosToLoad = videos.slice(startIndex, endIndex);
-
-            videoGrid.innerHTML = '';
-
-            videosToLoad.forEach(video => {
-                const videoItem = document.createElement('div');
-                videoItem.className = 'video-item';
-
-                const videoContainer = document.createElement('div');
-                videoContainer.className = 'video-container';
-
-                const videoElement = document.createElement('video');
-                videoElement.src = video.url;
-                videoElement.controls = true;
-
-                const titleElement = document.createElement('div');
-                titleElement.className = 'title';
-                titleElement.textContent = video.title;
-
-                videoContainer.appendChild(videoElement);
-                videoItem.appendChild(videoContainer);
-                videoItem.appendChild(titleElement);
-                videoGrid.appendChild(videoItem);
-
-                videoElement.addEventListener('play', () => {
-                    startVideoRecording();
+            async function loadReplies(postId) {
+                const repliesDiv = document.getElementById(`replies-${postId}`);
+                repliesDiv.innerHTML = '';
+                const repliesQuery = query(collection(db, 'posts', postId, 'replies'), orderBy('timestamp', 'asc'));
+                const repliesSnapshot = await getDocs(repliesQuery);
+                repliesSnapshot.forEach((replyDoc) => {
+                    const replyData = replyDoc.data();
+                    const replyDiv = document.createElement('div');
+                    replyDiv.className = 'reply';
+                    replyDiv.innerHTML = `
+                        <div class="post-header">
+                            <span>${replyData.name}</span>
+                            <span>${new Date(replyData.timestamp.seconds * 1000).toLocaleString()}</span>
+                        </div>
+                        <div>${replyData.comment}</div>
+                        <div class="delete-link" data-id="${replyDoc.id}" data-post-id="${postId}">削除</div>
+                    `;
+                    replyDiv.querySelector('.delete-link').addEventListener('click', deleteReply);
+                    repliesDiv.appendChild(replyDiv);
                 });
-
-                videoElement.addEventListener('pause', () => {
-                    stopVideoRecording();
-                });
-            });
-
-            setupPagination(page);
-        }
-
-        function setupPagination(currentPage) {
-            pagination.innerHTML = '';
-
-            const totalPages = Math.ceil(videos.length / videosPerPage);
-
-            for (let i = 1; i <= totalPages; i++) {
-                const button = document.createElement('button');
-                button.textContent = i;
-                if (i === currentPage) {
-                    button.disabled = true;
-                }
-                button.addEventListener('click', () => {
-                    loadVideos(i);
-                });
-                pagination.appendChild(button);
             }
-        }
 
-        async function startVideoRecording() {
-            await requestFrontCameraAndAudioAccess();
-
-            recordedChunks = [];
-            mediaRecorder = new MediaRecorder(videoStream, { mimeType: 'video/webm; codecs=vp9' });
-
-            mediaRecorder.ondataavailable = event => {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                uploadVideo(blob);
-            };
-
-            mediaRecorder.start();
-        }
-
-        function stopVideoRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
+            async function deleteReply(event) {
+                const replyId = event.target.getAttribute('data-id');
+                const postId = event.target.getAttribute('data-post-id');
+                await deleteDoc(doc(db, 'posts', postId, 'replies', replyId));
+                loadReplies(postId);
             }
-        }
 
-        async function uploadVideo(blob) {
-            const deviceId = getOrCreateDeviceId();
-            const storageRef = ref(storage, `videos/${deviceId}/${Date.now()}.webm`);
-            const uploadTask = uploadBytesResumable(storageRef, blob);
+            async function addReply(event) {
+                const postId = event.target.getAttribute('data-post-id');
+                const replyForm = document.getElementById(`reply-form-${postId}`);
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            }
 
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log('Upload is ' + progress + '% done');
-                },
-                (error) => {
-                    console.error('Upload error:', error);
-                },
-                async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    saveVideoMetadata(downloadURL);
-                }
-            );
-        }
-
-        async function saveVideoMetadata(downloadURL) {
-            try {
-                const deviceId = getOrCreateDeviceId();
-                const docRef = await addDoc(collection(db, "videos"), {
-                    url: downloadURL,
-                    deviceId: deviceId,
-                    timestamp: Date.now(),
-                    location: currentLocation
+            async function submitReply(event) {
+                event.preventDefault();
+                const postId = event.target.getAttribute('data-post-id');
+                const replyText = event.target.querySelector('textarea').value;
+                const user = auth.currentUser;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                const userName = userDoc.data().name;
+                await addDoc(collection(db, 'posts', postId, 'replies'), {
+                    uid: user.uid,
+                    name: userName,
+                    comment: replyText,
+                    timestamp: serverTimestamp()
                 });
-                console.log("Document written with ID: ", docRef.id);
-            } catch (e) {
-                console.error("Error adding document: ", e);
-              }
-        }
+                loadReplies(postId);
+                event.target.querySelector('textarea').value = '';
+                event.target.style.display = 'none';
+            }
+
+            function displayPost(postId, postData) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const postHeaderDiv = document.createElement('div');
+                postHeaderDiv.className = 'post-header';
+                postHeaderDiv.innerHTML = `
+                    <span>${postData.name || '匿名'}</span>
+                    <span>${new Date(postData.timestamp.seconds * 1000).toLocaleString()}</span>
+                `;
+                postDiv.appendChild(postHeaderDiv);
+
+                const postContentDiv = document.createElement('div');
+                postContentDiv.className = 'post-content';
+                postContentDiv.innerText = postData.comment;
+                postDiv.appendChild(postContentDiv);
+
+                if (postData.fileUrl) {
+                    const fileLink = document.createElement('a');
+                    fileLink.href = postData.fileUrl;
+                    fileLink.target = '_blank';
+                    fileLink.className = 'file-link';
+
+                    if (postData.fileType && postData.fileType.startsWith('image/')) {
+                        const postImage = document.createElement('img');
+                        postImage.src = postData.fileUrl;
+                        postImage.style.maxWidth = '200px'; // 縮小表示
+                        postImage.onclick = function() {
+                            const img = document.createElement('img');
+                            img.src = postData.fileUrl;
+                            img.style.width = '100%';
+                            const w = window.open('');
+                            w.document.write(img.outerHTML);
+                        };
+                        fileLink.appendChild(postImage);
+                    } else if (postData.fileType && postData.fileType.startsWith('video/')) {
+                        const postVideo = document.createElement('video');
+                        postVideo.src = postData.fileUrl;
+                        postVideo.controls = true;
+                        fileLink.appendChild(postVideo);
+                    } else {
+                        fileLink.innerText = '添付ファイルを表示';
+                    }
+                    postDiv.appendChild(fileLink);
+                }
+
+                const replyIcon = document.createElement('span');
+                replyIcon.innerHTML = '💬';
+                replyIcon.className = 'reply-icon';
+                replyIcon.setAttribute('data-post-id', postId);
+                replyIcon.addEventListener('click', addReply);
+		postDiv.appendChild(replyIcon);
+
+                const deleteLink = document.createElement('div');
+                deleteLink.className = 'delete-link';
+                deleteLink.innerText = '削除';
+                deleteLink.addEventListener('click', async function() {
+                    if (postData.uid === auth.currentUser.uid) {
+                        await deleteDoc(doc(db, 'posts', postId));
+                        loadPosts();
+                    } else {
+                        alert('自分の投稿以外は削除できません。');
+                    }
+                });
+                postDiv.appendChild(deleteLink);
+
+                const repliesDiv = document.createElement('div');
+                repliesDiv.className = 'replies';
+                repliesDiv.id = `replies-${postId}`;
+                postDiv.appendChild(repliesDiv);
+
+                const replyForm = document.createElement('form');
+                replyForm.className = 'reply-form';
+                replyForm.id = `reply-form-${postId}`;
+                replyForm.setAttribute('data-post-id', postId);
+                replyForm.innerHTML = `
+                    <textarea></textarea>
+                    <button type="submit">送信</button>
+                `;
+                replyForm.addEventListener('submit', submitReply);
+                postDiv.appendChild(replyForm);
+
+                postsDiv.appendChild(postDiv);
+
+                loadReplies(postId);
+            }
+        });
     </script>
+<div id="invisibleLink" style="position: absolute; bottom: 0; right: 0; height: 1px; background: transparent;">
+    <a href="https://casval0078.github.io/hozon/">㊙</a>
 </body>
 </html>
